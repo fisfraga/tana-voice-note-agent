@@ -2,7 +2,7 @@
 name: pros-and-cons
 title: "📉📈 Pros and Cons"
 description: Structure a decision brainstorm into For, Against, and Neutral arguments — with AI additions marked.
-category: create
+category: act
 scope: [single]
 mode: oneshot
 origin: tvna-v2
@@ -27,7 +27,7 @@ Analyze the brainstorm and create a list of all the ideas that support or go aga
 1. Identify WHAT the situation is about — what is being discussed. If the situation deals with 2 options, consider the first option as 'For' and the second as 'Against'.
 2. Identify all the ideas mentioned and list each as its own item. The user may indicate ideas are 'For' or 'Against' — use this to build the outline.
 3. Use interpretive intelligence to categorize every idea and argument as 'For', 'Against', or 'Neutral'.
-4. Add any CLEAR arguments 'For' or 'Against' that you can contribute, prepended with **AI:**, in the note's language — two suggestions for each side.
+4. Add any CLEAR arguments 'For' or 'Against' that you can contribute, prepended with **AI adds:**, in the note's language — two suggestions for each side.
 5. Build the outline with three sections: 'For', 'Against', 'Neutral'.
 
 ### FORMAT
@@ -43,11 +43,11 @@ Analyze the brainstorm and create a list of all the ideas that support or go aga
 
 ## For (<option A>)
 - Argument from the note
-- **AI:** contributed argument
+- **AI adds:** contributed argument
 
 ## Against (<option B or staying put>)
 - Argument from the note
-- **AI:** contributed argument
+- **AI adds:** contributed argument
 
 ## Neutral
 - Plain observation

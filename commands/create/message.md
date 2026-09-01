@@ -21,7 +21,7 @@ Generate a message based on the voice note. The note contains what the user want
 ### STEPS
 
 1. Read the transcript to understand the context and the intent of the message.
-2. Identify the person the message is addressed to.
+2. Identify the person the message is addressed to. If the archive contains earlier notes mentioning the same recipient, use them to calibrate tone and shared context.
 3. Identify the language the message should be in — default to the language the recipient would expect (often the language of the transcript; the user may dictate in one language and ask for the message in another).
 4. Identify whether the user mentioned a specific style (formal, casual, warm, brief); default to a natural, normal tone.
 5. Draft the message: say everything the user wanted to say, in their voice, organized for the recipient — not a transcript cleanup, but the message they would have written.

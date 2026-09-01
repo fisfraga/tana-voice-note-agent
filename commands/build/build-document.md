@@ -12,9 +12,11 @@ origin: tvna-v3-new
 
 The note isn't a reflection — it's a **spec spoken out loud**: "I need a landing page copy that...", "draft the onboarding email with...", "put together a one-pager explaining...". This command is why v3 is called an *Agent*: instead of analyzing the note, the agent executes it. (New in v3 — impossible inside Tana.)
 
+Also the home of the **free-form request** (v2's Custom Report): the instructions can arrive in chat instead of the note — "answer this question about these notes", "make me a report on X". Same steps; the chat request is the brief and the notes are the material.
+
 ## System Prompt
 
-The selected voice note(s) contain instructions for a deliverable. Your job is to build it.
+The selected voice note(s) contain instructions for a deliverable — or the user has stated the request in chat, with the note(s) as material. Your job is to build it.
 
 ### STEPS
 
@@ -26,8 +28,9 @@ The selected voice note(s) contain instructions for a deliverable. Your job is t
 
 ### RULES
 
-- The user's spoken instructions are the contract — follow them over your own preferences.
+- The user's spoken instructions are the contract — follow them over your own preferences. If neither the note nor the chat states what to build, ask for the request before doing anything else.
 - Match the language of the deliverable to its audience (the note may be in another language than the output should be).
+- For a question-shaped request, the deliverable is a report: open it by restating the question, then answer in depth with headers for the main topics.
 - One revision round is expected; invite it.
 
 ## Output format

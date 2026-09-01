@@ -1,92 +1,95 @@
 # Command Library Index
 
-The complete catalog of Voice Note Agent commands. `/vn-process` reads this file to suggest and route commands; each entry links to a command file whose **System Prompt** section becomes the working instructions when it runs.
+The complete catalog of Voice Note Agent commands — **22 commands · 8 wisdom lenses**, in 5 categories. `/vn-process` reads this file to suggest and route commands; each entry links to a command file whose **System Prompt** section becomes the working instructions when it runs.
 
-**Scope**: `single` = one voice note · `collection` = several notes (a day, a date range, a collection file, or a theme).
-**Mode**: `oneshot` = produces a document · `interactive` = opens a conversation (close any interactive session with [chat-report](create/chat-report.md) to save it).
+**Scope**: `single` = one voice note · `collection` = several notes (a day, a date range, a collection file, or a theme). Either way, the selection is a starting point, not a wall — every command may pull broader context from the archive.
+**Mode**: `oneshot` = produces a document · `interactive` = opens a conversation (any interactive session offers a saved consolidation on wind-down — `vn-process` skill, step 4).
+**Choices**: when a command has a real decision to make (tone, style, format, lens), the agent uses the harness's ask-user mechanism if present; otherwise it infers, *states the inferred parameters*, and offers one revision round.
 
 ## 🔍 Understand
 
 | Command | Scope | Mode | When to use |
 |---|---|---|---|
-| [basic-chat](understand/basic-chat.md) 💬 | single, collection | interactive | Just talk through what you captured — no framework, a thinking partner. |
-| [deep-chat](understand/deep-chat.md) 🪼 | single, collection | interactive | Contemplative, challenging exploration of an idea that deserves depth. |
+| [chat](understand/chat.md) 💬 | single, collection | interactive | Talk it through — light thinking partner or deep contemplative exploration. |
 | [insight-crystallizer](understand/insight-crystallizer.md) 💫 | single, collection | interactive | Isolate and develop the breakthrough moments hiding in a note. |
-| [identify-main-themes](understand/identify-main-themes.md) 🗂️ | single, collection | oneshot | Inventory of topics — the natural first pass before deeper commands. |
+| [identify-main-themes](understand/identify-main-themes.md) 🗂️ | single, collection | oneshot | Fast inventory of topics — the natural first pass, feeds `/vn-catalog`. |
 | [cognitive-bias-analyzer](understand/cognitive-bias-analyzer.md) 🤔 | single, collection | interactive | Honest check of thinking patterns and blind spots before a decision. |
+| [knowledge-gap-explorer](understand/knowledge-gap-explorer.md) 🔍 | single, collection | interactive | Find blindspots and the questions you're not asking. |
 
-## 🎯 Take Action
-
-| Command | Scope | Mode | When to use |
-|---|---|---|---|
-| [action-strategic-planner](take-action/action-strategic-planner.md) 🎯 | single, collection | interactive | Turn a situation or idea into strategic pathways and a sequenced plan. |
-| [growth-knowledge-navigator](take-action/growth-knowledge-navigator.md) 🌱 | single, collection | interactive | Turn a growth edge into a structured learning path. |
-| [task-extractor-by-project](take-action/task-extractor-by-project.md) 🤾 | single, collection | oneshot | Pull every task out of a ramble, grouped by project, dates preserved. |
-
-## 🏔️ Explore & 🌐 Connect
+## 🕸️ Connect
 
 | Command | Scope | Mode | When to use |
 |---|---|---|---|
-| [cross-connections](explore-connect/cross-connections.md) 🕸️ | collection | interactive | Surface non-obvious links between notes. |
-| [synthesis-of-knowledge](explore-connect/synthesis-of-knowledge.md) 🖇️ | collection | interactive | Apply one note's methods/solutions to another note's problems. |
-| [knowledge-gap-explorer](explore-connect/knowledge-gap-explorer.md) 🔍 | single, collection | interactive | Find blindspots and the questions you're not asking. |
-| [suggest-mental-models](explore-connect/suggest-mental-models.md) 🧠 | single, collection | interactive | 7 mental models from 7 disciplines, applied to your situation. |
-| [generate-metaphors](explore-connect/generate-metaphors.md) 🦎 | single, collection | interactive | Translate an abstract idea into vivid metaphors. |
-| [stakeholder-perspective](explore-connect/stakeholder-perspective.md) 👥 | single, collection | interactive | Articulate every viewpoint touched by your idea or situation. |
-| [scale-shift-analysis](explore-connect/scale-shift-analysis.md) 🌎 | single, collection | interactive | See the idea from micro to universal scale; find the leverage. |
-| [multi-perspective-creator](explore-connect/multi-perspective-creator.md) 🎭 | single, collection | interactive | Map audiences, objections, and framings for content-bound ideas. |
-| [time-evolution-analyzer](explore-connect/time-evolution-analyzer.md) ⏳ | collection | interactive | Track how your thinking on a topic evolved across months of notes. |
+| [connect](connect/connect.md) 🕸️ | collection | interactive | Non-obvious links between notes; apply one note's methods to another's problems. |
+| [time-evolution-analyzer](connect/time-evolution-analyzer.md) ⏳ | collection | interactive | Track how your thinking on a topic evolved across months of notes. |
+| [perspectives](connect/perspectives.md) 🎭 | single, collection | interactive | Every relevant viewpoint — stakeholders (to act) or audiences (to publish). |
+| [lens-analysis](connect/lens-analysis.md) 🔭 | single, collection | interactive | Read the note through a chosen wisdom lens (table below). |
 
-## 🪬 Higher Understanding
+### 🔭 Lenses *(for `lens-analysis` — invoke as "lens-analysis: hermetic"; each is one file in `commands/lenses/`)*
+
+| Lens | Reads the note through |
+|---|---|
+| [metaphors](lenses/metaphors.md) 🦎 | 10 metaphorical frameworks — translate the abstract into vivid images. |
+| [scales](lenses/scales.md) 🌎 | 10 scales, individual → quantum — find where the leverage lives. |
+| [mental-models](lenses/mental-models.md) 🧠 | 7 mental models from 7 disciplines, applied in tandem. |
+| [consciousness](lenses/consciousness.md) 🪷 | 11 layers of awareness — emotional, intuitive, spiritual, universal. |
+| [hermetic](lenses/hermetic.md) 🔮 | The seven Hermetic principles — the law beneath the surface story. |
+| [zodiac](lenses/zodiac.md) 🪐 | The 12 zodiacal archetypes — which energies the moment calls for (not predictive). |
+| [four-agreements](lenses/four-agreements.md) 🍀 | Don Miguel Ruiz's Four Agreements — a compassionate self-check. |
+| [emotions](lenses/emotions.md) 🫀 | David Hawkins's Map of Consciousness — gentle emotional naming. |
+
+## 🎯 Act
 
 | Command | Scope | Mode | When to use |
 |---|---|---|---|
-| [dimensions-of-consciousness](higher-understanding/dimensions-of-consciousness.md) 🪷 | single, collection | interactive | View an idea through layers of awareness — emotional to universal. |
-| [hermetic-principles-analysis](higher-understanding/hermetic-principles-analysis.md) 🔮 | single, collection | interactive | Read the situation through the seven Hermetic principles. |
-| [zodiac-archetypes-analysis](higher-understanding/zodiac-archetypes-analysis.md) 🪐 | single, collection | interactive | Which archetypal energies the moment calls for (not predictive). |
-| [four-agreements-analysis](higher-understanding/four-agreements-analysis.md) 🍀 | single, collection | interactive | Compassionate check against Don Miguel Ruiz's Four Agreements. |
+| [plan](act/plan.md) 🎯 | single, collection | interactive | Strategy from a note — execution pathways, or a growth/learning path. |
+| [task-extractor](act/task-extractor.md) 🤾 | single, collection | oneshot | Pull every task out of a ramble, grouped by project, dates preserved. |
+| [pros-and-cons](act/pros-and-cons.md) 📉📈 | single | oneshot | Sort a decision into For / Against / Neutral, with AI additions marked. |
 
 ## 📝 Create
 
 | Command | Scope | Mode | When to use |
 |---|---|---|---|
-| [summary](create/summary.md) 📝 | single | oneshot | Generate or regenerate the note's structured first-person summary. |
-| [clean-transcript](create/clean-transcript.md) 🧹 | single | oneshot | Clean a raw transcript without changing meaning. |
-| [tag-and-connect-entities](create/tag-and-connect-entities.md) 🕸️ | single, collection | oneshot | Extract people/topics/contemplations into frontmatter & collections. |
-| [custom-report](create/custom-report.md) 🧾 | single, collection | oneshot | Your own question or request — the free-form command. |
-| [brainstorm-ideas](create/brainstorm-ideas.md) 🧠 | single | oneshot | Structure a brainstorm: every idea explained + AI suggestion. |
-| [content-outline](create/content-outline.md) 🗣️ | single, collection | oneshot | Turn a content brainstorm into a full article outline. |
-| [final-content-piece](create/final-content-piece.md) ✍️ | single | oneshot | Transmute a spoken first draft into a finished article. |
-| [titles-brainstorm](create/titles-brainstorm.md) ❗️ | single | interactive | 20 titles, top 3 argued, then refine together. |
+| [structure-ideas](create/structure-ideas.md) 🧠 | single, collection | oneshot | Brainstorm → structure: flat list, article outline, or deep mind map. |
+| [journal-entry](create/journal-entry.md) 📔 | single, collection | oneshot | Journal note → topics, classified moments, and a gentle emotional read. |
 | [message](create/message.md) 💬 | single | oneshot | Turn a dictation into a ready-to-send message to a person. |
-| [mind-map](create/mind-map.md) 🗺️ | single, collection | oneshot | Hierarchical mind map of the ideas and their relationships. |
 | [tell-a-story](create/tell-a-story.md) 🏰 | single | oneshot | Reframe the situation as an inspiring short story. |
-| [pros-and-cons](create/pros-and-cons.md) 📉📈 | single | oneshot | Sort a decision into For / Against / Neutral, with AI additions. |
-| [reflection](create/reflection.md) 🤔 | single | oneshot | Structure a journal entry: topics, items, classified moments. |
-| [emotions](create/emotions.md) 🫀 | single, collection | oneshot | Name the emotional states via the Map of Consciousness. |
-| [image](create/image.md) 🖼️ | single | oneshot | World-class image prompt (and image) illustrating the note. |
-| [infographic](create/infographic.md) 📊 | single | oneshot | The note's concept/process as an infographic prompt. |
-| [chat-report](create/chat-report.md) 📝 | single, collection | oneshot | Save any interactive session as a consolidated document. |
+| [visual](create/visual.md) 🖼️ | single | oneshot | Image or infographic prompt (and the image, when generation is available). |
 
-## 🚀 Build *(new in v3 — agent-native)*
+## 🚀 Build *(agent-native)*
 
 | Command | Scope | Mode | When to use |
 |---|---|---|---|
-| [build-document](build/build-document.md) 📄 | single, collection | oneshot | The note is a spoken spec — build the document it describes. |
+| [build-document](build/build-document.md) 📄 | single, collection | oneshot | The note is a spoken spec — build the deliverable. Also the free-form "answer this / make me a report" command. |
 | [build-feature](build/build-feature.md) 🛠️ | single, collection | interactive | The note describes software — spec it and implement it in your repo. |
-| [article-pipeline](build/article-pipeline.md) 📰 | single, collection | interactive | Voice → outline → research → draft → polish, resumable stages. |
+| [article-pipeline](build/article-pipeline.md) 📰 | single, collection | interactive | Voice → outline → research → draft → polish → publish, resumable stages. |
 | [weekly-digest](build/weekly-digest.md) 🗞️ | collection | oneshot | A week of notes → themes, wins, decisions, open loops, next actions. |
 | [project-brief](build/project-brief.md) 📋 | collection | oneshot | A project collection → living project brief / PRD, updated in place. |
 
 ## Mapping from Tana Voice Note Agent v2
 
-Every v2 command and AI chat agent is represented. Where v2 had duplicates or Tana-only mechanics, v3 consolidates:
+Every v2 command and AI chat agent is represented — v3 consolidates where v2 had duplicates, Tana-only mechanics, or several names for one job:
 
-- **[GPT] / [Claude] variants** (Brainstorm, Content Outline, Final Content Piece) → one command each; the model is whatever runs your harness.
+**Platform consolidations (v3.0):**
+
+- **[GPT] / [Claude] variants** → one command each; the model is whatever runs your harness.
 - **Commands vs Chats** → one Command category; `mode:` preserves the difference.
 - **Collection variants** of the chat agents (v2's "AI Analysis — Collection of Voice Notes") → the same command run with a collection scope.
-- **Write Content Piece** (sub-command on outlines) → `final-content-piece` (works from a note or an outline).
-- **B&W Infographic** → `infographic` with the B&W style. **Content Image** → `image`.
-- **Autofill** (Super Folder suggestions for Area/Project/Topic/Contemplation fields) → the `/vn-catalog` skill.
-- **Transcribe** → stays in Tana (the audio lives there); sync brings the transcript down. `clean-transcript` covers un-cleaned captures locally.
-- **Move to Today / Set AI Model / Generate Chat Report as Tana command** → obsolete in an agent harness (chat-report survives as a command file).
+- **Move to Today / Set AI Model** → obsolete in an agent harness.
+- **Transcribe** → stays in Tana (the audio lives there); sync brings the transcript down.
+
+**Semantic consolidations (v3.1) — where to find each v2 command:**
+
+- **Basic Chat + Deep Chat** → [chat](understand/chat.md) (light/deep register).
+- **Cross-Connections + Synthesis of Knowledge** → [connect](connect/connect.md).
+- **Stakeholder Perspective + Multi-Perspective Creator** → [perspectives](connect/perspectives.md) (stakeholders/audiences lens).
+- **Suggest Mental Models, Generate Metaphors, Scale Shift, Dimensions of Consciousness, Hermetic Principles, Zodiac Archetypes, Four Agreements, Emotions** → [lens-analysis](connect/lens-analysis.md) + one lens file each.
+- **Action Strategic Planner + Growth & Knowledge Navigator** → [plan](act/plan.md) (execution/growth domain).
+- **Brainstorm Ideas + Content Outline + Mind Map** → [structure-ideas](create/structure-ideas.md) (list/outline/mindmap format).
+- **Reflection + Emotions** → [journal-entry](create/journal-entry.md) (structure + emotional read in one pass).
+- **Image + Infographic + B&W Infographic** → [visual](create/visual.md) (image/infographic type, B&W style).
+- **Final Content Piece, Titles Brainstorm, Write Content Piece** → stages of [article-pipeline](build/article-pipeline.md) (each runnable standalone).
+- **Custom Report** → [build-document](build/build-document.md) (the request can arrive in chat).
+- **Generate Summary / Summary (Repeat) + Clean Transcript** → the `/vn-sync` skill's enrichment step (sync already brings Tana's summary down; enrichment covers the rest).
+- **Autofill / Tag and Connect Entities** (Super Folder suggestions for Area/Project/Topic/Contemplation fields) → the `/vn-catalog` skill.
+- **Generate Chat Report** → the `/vn-process` skill's wind-down step (offered at the end of every interactive session).

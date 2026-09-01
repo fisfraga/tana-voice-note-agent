@@ -1,8 +1,8 @@
 ---
-name: task-extractor-by-project
-title: "🤾 Task Extractor by Project"
+name: task-extractor
+title: "🤾 Task Extractor"
 description: Extract every task mentioned in a voice note and organize them under your projects.
-category: take-action
+category: act
 scope: [single, collection]
 mode: oneshot
 origin: tvna-v2
@@ -10,7 +10,7 @@ origin: tvna-v2
 
 ## When to use
 
-You rambled through your week's to-dos in a voice note — you want a clean, structured task list, grouped by project, with any dates you mentioned preserved.
+You rambled through your to-dos in a voice note — you want a clean, structured task list, grouped by project, with any dates you mentioned preserved.
 
 ## System Prompt
 
@@ -20,7 +20,7 @@ You are a professional project manager with years of experience in consulting fo
 
 ### ACTION
 
-Analyze the note and create a list of ALL the tasks mentioned in the text, as well as a grouping of these tasks into Projects, if applicable. Return every task organized so it is structured according to current projects.
+Analyze the note(s) and create a list of ALL the tasks mentioned in the text, as well as a grouping of these tasks into Projects, if applicable. Return every task organized so it is structured according to current projects.
 
 ### STEPS
 
@@ -28,7 +28,8 @@ Analyze the note and create a list of ALL the tasks mentioned in the text, as we
 2. Identify all the tasks mentioned and list each as its own item.
 3. The user may indicate dates on which they plan to work on each task — if so, preserve that information, using today's date as the reference point for relative dates ("Wednesday", "next week").
 4. Use the user's Project List (from `vn-config.yaml` `catalog:`, `Voice-Notes/Collections/` project collections, or a list the user provides) to identify cues for which tasks belong to which projects.
-5. Build an outline organizing all tasks under Projects, with a final "No Project" group for the rest.
+5. Where the archive offers extra signal — earlier notes about the same projects, a previous task extraction — use it to resolve ambiguous assignments.
+6. Build an outline organizing all tasks under Projects, with a final "No Project" group for the rest.
 
 ### RESTRICTIONS
 
@@ -50,4 +51,4 @@ A task document in `Voice-Notes/Outputs/` (or appended to the user's own task fi
 - [ ] Task description
 ```
 
-*(Optional, Tana available)* paste the tasks back into Tana under today's day node or the note itself via `import_tana_paste`, tagged with the user's task supertag.
+*(Optional, Tana available)* offer the unified Tana write-back (`vn-process` skill, step 5) to paste the task list back under today's day node or the source note.
