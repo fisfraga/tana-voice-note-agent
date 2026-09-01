@@ -1,0 +1,13 @@
+# Secrets — never commit tokens; the sync script reads them from your
+# harness MCP config (~/.claude.json) or TANA_MCP_TOKEN env var.
+.env
+.env.*
+
+# Harness-local state
+.claude/settings.local.json
+.DS_Store
+__pycache__/
+*.pyc
+
+# Scratch / local experiments
+_scratch/
