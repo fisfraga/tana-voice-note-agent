@@ -16,20 +16,25 @@
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 2. ARCHIVE (local, canonical)                                           │
 │    Voice-Notes/2026/2026-08-31-my-idea.md — frontmatter + transcript    │
+│    enrichment on arrival: clean raw transcripts, fill missing summaries │
 │    sync-manifest.tsv remembers what's synced (idempotent, never         │
 │    overwrites, safe to re-run forever)                                  │
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │  /vn-catalog
-                               │  areas/projects/topics into frontmatter,
-                               │  Collections/*.md (wikilink groups), INDEX.md
+                               │  areas/projects/topics/entities into
+                               │  frontmatter, Collections/*.md (wikilink
+                               │  groups), INDEX.md
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 3. PROCESS (the agent)                                                  │
 │    /vn-process: pick scope → suggest commands → run                     │
 │    commands/<category>/<name>.md = the prompt; the agent = the engine   │
-│    Outputs → Voice-Notes/Outputs/, sources updated (processed:)         │
+│    Outputs → Voice-Notes/Outputs/, sources updated                      │
+│    (processed: + outputs: back-links)                                   │
 └──────────────────────────────┬──────────────────────────────────────────┘
-                               │  optional write-back (import_tana_paste)
+                               │  optional write-back: outputs
+                               │  (import_tana_paste) and connections
+                               │  (set_field_content, tana.sync_connections)
                                ▼
                         Tana, if you still live there
 ```
@@ -50,8 +55,8 @@
 
 ## Commands vs. skills
 
-Three **skills** (how the agent operates: sync, route/process, catalog) and 43 **commands** (what can be done to notes — plain markdown prompt files). Skills are harness plumbing; commands are the product's soul, portable to any AI that can read a file. Adding your own command = adding one file (see `customization.md`).
+Three **skills** (how the agent operates: sync+enrich, route/process, catalog) and **22 commands · 8 lenses** (what can be done to notes — plain markdown prompt files). Skills are harness plumbing; commands are the product's soul, portable to any AI that can read a file. Routine per-note work (transcript cleanup, summaries, entity tagging, chat reports) lives inside the skills — commands are reserved for things worth *choosing*. Adding your own command or lens = adding one file (see `customization.md`).
 
 ## The v2 lineage
 
-The command library is a faithful port of the Tana Voice Note Agent v2.0: its 20 AI chat agents (Understand / Take Action / Explore & Connect / Higher Understanding), its smart-object commands (Create), and its collection-analysis variants — unified into one command format, minus Tana-only mechanics (model pickers, node targets, field plumbing), plus the new agent-native `build/` category. The full mapping is at the bottom of `commands/INDEX.md`.
+Every v2 chat agent and smart-object command survives — but redesigned, not just ported. v2 was built one-note-at-a-time inside an outliner, so it needed many near-identical commands (eight agents sharing one "lens menu" skeleton, three idea-structuring commands sharing one persona, separate commands per output node type). v3's commands are *boundless* — any note plus any archive context — so those collapse into single, stronger commands: the lens engine with 8 lens files, `structure-ideas` with 3 formats, `journal-entry` doing reflection + emotions in one pass. Tana-only mechanics (model pickers, node targets, field plumbing, supertag outputs) became file-native equivalents. The full v2 → v3 mapping is at the bottom of `commands/INDEX.md`.

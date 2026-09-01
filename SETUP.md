@@ -4,7 +4,7 @@ Five steps, ~5 minutes. You'll connect Tana's local API to your agent harness, t
 
 ## 1. Capture side — Tana
 
-- Use the [Tana Voice Note Agent template](https://pay.hotmart.com/A96283812F?checkoutMode=10) (recommended): voice notes get a `#voice note` supertag with **Transcript** and **Transcript Summary (AI)** fields, auto-transcribed on capture.
+- Use the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) (recommended): voice notes get a `#voice note` supertag with **Transcript** and **Transcript Summary (AI)** fields, auto-transcribed on capture.
 - Or roll your own: any supertag on nodes whose transcript lives in a field or in child bullets works. If your field labels differ, set them in `vn-config.yaml → tana.field_labels`.
 
 ## 2. Enable Tana's local MCP server
@@ -38,6 +38,8 @@ Open `vn-config.yaml`:
 - Set an absolute path into your Second Brain, e.g. `archive.dir: "/Users/you/SecondBrain/Voice-Notes"`.
 - Pick a `layout`: `by-year` (default) · `by-month` · `flat`.
 - Optionally seed `catalog.areas/projects/topics` with your own vocabulary — `/vn-catalog` will propose from these.
+- `archive.enrich` (default `true`) cleans raw transcripts and fills missing summaries right after each sync.
+- `tana.sync_connections` decides whether confirmed areas/projects/topics mirror back to your Tana Super Folder fields (`/vn-sync setup` asks; default `false` = Tana is capture-only).
 
 ## 5. First sync
 
@@ -73,3 +75,4 @@ Then `/vn-catalog` to organize the new files, and `/vn-process` to start working
 - **Connection refused** — Tana desktop isn't running, or the local API is disabled.
 - **`no transcript` failures on sync** — the note hasn't been transcribed in Tana yet (open it in Tana; the template's automation fills the Transcript field). Re-run `/vn-sync` later; failed rows retry automatically.
 - **Wrong notes synced** — your voice-note tag choice was too broad; re-run `/vn-sync setup` and pick the precise supertag.
+- **Connection sync-back fails** — `tana.field_labels` must match your template's field names exactly (rename them in `vn-config.yaml` for non-English templates); delete `tana.field_ids` to force re-resolution. Sync-back needs Tana MCP in the session — the script alone can't do it.
