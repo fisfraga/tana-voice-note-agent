@@ -21,10 +21,23 @@ tana:
 
   # The field labels the parser looks for in a note's children, exactly as they
   # appear in your Tana template. Change these if you renamed the fields or use
-  # a non-English template.
+  # a non-English template. The area/project/topic labels name the Super Folder
+  # fields used when sync_connections is on.
   field_labels:
     transcript: "Transcript"
     summary: "Transcript Summary (AI)"
+    area: "Area(s)"
+    project: "Project(s)"
+    topic: "Topic(s)"
+
+  # Should /vn-catalog mirror confirmed areas/projects/topics back to the
+  # note's Tana Super Folder fields? false = Tana is capture-only (default).
+  # Set during /vn-sync setup; flip it any time.
+  sync_connections: false
+
+  # Cache of Tana field IDs, resolved once by /vn-catalog sync via
+  # get_tag_schema. Leave empty; the agent fills it.
+  field_ids: {}
 
 archive:
   # Where synced notes live. A path relative to this repo, or an ABSOLUTE path
@@ -43,6 +56,11 @@ archive:
   # Language for command outputs (summaries, reports...). Notes themselves stay
   # in whatever language you spoke them.
   language: "en"
+
+  # After each sync, enrich newly arrived notes: clean a raw transcript
+  # (filler removal, punctuation, paragraphs — meaning preserved) and generate
+  # a summary when Tana didn't provide one. Agent-side; see the vn-sync skill.
+  enrich: true
 
 catalog:
   # Your organizational vocabulary. vn-catalog proposes assignments from these

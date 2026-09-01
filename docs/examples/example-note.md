@@ -6,7 +6,8 @@ tags: [voice-note, garden]
 areas: [community]
 projects: [garden-workshop]
 topics: [teaching]
-processed: [identify-main-themes, task-extractor-by-project]
+processed: [identify-main-themes, task-extractor]
+outputs: ["[[2026-08-14-task-extractor-garden-workshop]] — 6 tasks extracted, 4 under garden-workshop"]
 tana_id: EXAMPLEnode01
 source: "Tana — Example Workspace (Nd-EXAMPLE)"
 ---

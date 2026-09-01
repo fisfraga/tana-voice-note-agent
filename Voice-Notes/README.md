@@ -14,9 +14,9 @@ Voice-Notes/
 
 ## Ground rules
 
-- **Note files are yours.** Sync never overwrites an existing file; edit transcripts, add thoughts — nothing will clobber them. Only `/vn-catalog` touches them routinely, and only the frontmatter.
+- **Note files are yours.** Sync never overwrites an existing file; edit transcripts, add thoughts — nothing will clobber them. The body is touched exactly once — `/vn-sync` enrichment on arrival (clean + summarize); after that only frontmatter is maintained (`/vn-catalog` for areas/projects/topics/tags, `/vn-process` for `processed:` and `outputs:` back-links).
 - **`date` in a filename/frontmatter is the Tana capture date.** For imported or migrated audio that can differ from the recording date — trust the transcript when it clearly describes another time.
 - **The manifest is memory.** `sync-manifest.tsv` rows: `done` (synced) · `exists` (file was already here) · `failed` (usually still transcribing in Tana — retried next sync) · `skip` (hand-set: never sync this node).
 - **INDEX.md and Collections' `## Notes` sections are generated** by `/vn-catalog` — write prose in a collection above its `## Notes` heading; it survives regeneration.
 
-Formats: see [`docs/frontmatter-schema.md`](../docs/frontmatter-schema.md). A worked example note and collection live in [`docs/examples/`](../docs/examples/).
+Formats: see [`docs/frontmatter-schema.md`](../docs/frontmatter-schema.md). A worked example note, collection, and output live in [`docs/examples/`](../docs/examples/).

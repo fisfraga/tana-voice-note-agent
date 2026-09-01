@@ -421,6 +421,7 @@ def main():
                 "projects: []",
                 "topics: []",
                 "processed: []",
+                "outputs: []",
                 f"tana_id: {nid}",
                 f'source: "{source}"',
                 "---", "",

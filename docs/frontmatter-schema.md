@@ -12,6 +12,7 @@ areas: []                   # ← /vn-catalog fills these three
 projects: []                #   (mirrors the Tana template's Super Folder fields:
 topics: []                  #    Area(s) / Project(s) / Topic(s)+Contemplation(s))
 processed: []               # command names already run on this note (/vn-process appends)
+outputs: []                 # wikilinks to the outputs generated from this note, with a value gloss
 tana_id: nopW2YJqGtUp       # the source node — the bridge back to Tana
 source: "Tana — My Workspace (Nd-xxxxxxxx)"
 ---
@@ -26,7 +27,8 @@ One paragraph per Tana child bullet, blank-line separated.
 
 ## Summary
 
-- **Only present** if the note had a Transcript Summary (AI) field in Tana.
+- **Only present** if the note had a Transcript Summary (AI) field in Tana
+  (otherwise `/vn-sync` enrichment generates one right after sync).
 ```
 
 ## Field notes
@@ -34,7 +36,8 @@ One paragraph per Tana child bullet, blank-line separated.
 - **`date` caveat** — it's the date Tana *captured* the node, which is the recording date for live captures but not for imported/migrated audio. When a transcript clearly describes another time, trust the transcript.
 - **`tana_id`** — never change it; it's how sync stays idempotent and how write-back finds the node.
 - **`processed`** — lets `/vn-process` avoid re-suggesting what already ran; clear it to make a note "fresh" again.
-- **`areas`/`projects`/`topics`** — kebab-case values from your `vn-config.yaml` catalog vocabulary; `/vn-catalog` maintains them and the matching Collection files.
+- **`outputs`** — the note's memory of what came from it. Each entry is a wikilink plus a one-line value gloss, e.g. `"[[2026-08-31-insight-crystallizer-fresh-start]] — named the core insight"`. `/vn-process` appends it when saving an output; Obsidian's graph picks up the link.
+- **`areas`/`projects`/`topics`** — kebab-case values from your `vn-config.yaml` catalog vocabulary; `/vn-catalog` maintains them and the matching Collection files (people and contemplations land in `tags` as `person/...` / `contemplation/...`). With `tana.sync_connections: true`, confirmed values are mirrored to the note's Tana Super Folder fields.
 
 ## Output files (`Voice-Notes/Outputs/`)
 

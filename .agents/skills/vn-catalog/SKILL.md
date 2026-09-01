@@ -1,8 +1,8 @@
 ---
 name: vn-catalog
-description: Assign areas, projects, topics, and tags to voice notes; build and maintain dynamic Collections; regenerate the archive index.
-argument-hint: "[new | all | collections | index | collect \"<theme>\"]"
-version: 3.0.0
+description: Assign areas, projects, topics, tags, and entities to voice notes; build and maintain dynamic Collections; regenerate the archive index; optionally sync connections back to Tana.
+argument-hint: "[new | all | collections | index | collect \"<theme>\" | sync]"
+version: 3.1.0
 platforms: [macos, linux, windows]
 metadata:
   hermes:
@@ -13,11 +13,11 @@ metadata:
 
 **Duration:** 3–15 min | **Layer:** Archive → Structure | **Companion skills:** `/vn-sync` (upstream), `/vn-process` (consumes collections)
 
-The v3 evolution of the Tana template's Autofill + Super Folders: instead of fields on Tana nodes, notes carry `areas/projects/topics` frontmatter, and **Collections** are living markdown files of wikilinks — dynamic, portable, Obsidian-compatible.
+The v3 evolution of the Tana template's Autofill + Tag-and-Connect + Super Folders: instead of fields on Tana nodes, notes carry `areas/projects/topics` frontmatter, and **Collections** are living markdown files of wikilinks — dynamic, portable, Obsidian-compatible. Tana can stay in the loop (`tana.sync_connections`) or stay capture-only.
 
 ## Context to read first (do not skip)
 
-1. `vn-config.yaml` — the `catalog:` vocabulary (areas, projects, topics).
+1. `vn-config.yaml` — the `catalog:` vocabulary (areas, projects, topics) and `tana.sync_connections`.
 2. `Voice-Notes/Collections/` — list the existing collection files (names + frontmatter only).
 
 Do **not** read all notes up front — scan frontmatter only (step 1) and open full notes only when classifying them.
@@ -31,8 +31,13 @@ Do **not** read all notes up front — scan frontmatter only (step 1) and open f
    - Choose ONLY from: `catalog.*` lists in `vn-config.yaml`, existing collection names, and values already used in other notes' frontmatter.
    - Propose a NEW area/project/topic only when nothing existing fits, clearly marked as new.
    - If a note fits nothing, leave it empty — no forced classification.
-3. Present the batch as a table (note → proposed areas/projects/topics/tags) and ask for one confirmation (`y` / edits / skip list). Then update each note's frontmatter in place — touch nothing else in the file.
-4. Add wikilinks for the newly assigned notes to their matching collection files (create collections for any confirmed-new entity). Finish by regenerating the index (see `index`).
+3. **Entities** *(absorbs the v2 Tag-and-Connect flow)* — alongside areas/projects/topics, extract the entities genuinely present:
+   - **People** — individuals named or clearly referenced → `person/<name>` in `tags`.
+   - **Contemplations** — ongoing ideas the person wants to keep reflecting upon → `contemplation/<name>` in `tags` (or `topics`, per the user's preference).
+   - Plus plain `tags` for recurring vocabulary (`emotion/<state>` tags may arrive from `create/journal-entry`).
+   - Same discipline: reuse before inventing; short, reusable names (2–4 words); no padding.
+4. Present the batch as a table (note → proposed areas/projects/topics/tags) and ask for one confirmation (`y` / edits / skip list). Then update each note's frontmatter in place — touch nothing else in the file.
+5. Add wikilinks for the newly assigned notes to their matching collection files (create collections for any confirmed-new entity). If `tana.sync_connections: true`, mirror the batch to Tana (see `sync`). Finish by regenerating the index (see `index`).
 
 ### `all` — re-catalog everything (asks for confirmation first; otherwise identical)
 
@@ -67,9 +72,18 @@ Grep the archive for the theme, show the hits, confirm membership, write the col
 
 Rebuild from frontmatter only: total counts by year, then sections **By Area**, **By Project**, **By Topic** (each value → its notes as wikilinks, newest first), then **Collections** (link + one-liner), then **Recent outputs** (last 10 in `Outputs/`). Overwrite the whole file — it is generated, never hand-edited.
 
-### Optional Tana write-back (only if Tana MCP tools exist in this session)
+### `sync` — mirror connections to Tana (only if Tana MCP tools exist in this session)
 
-If the user maintains the Super Folder fields in Tana too, offer to mirror confirmed assignments back with `set_field_content` on each note's node. Skip silently when Tana is unavailable.
+Governed by `tana.sync_connections` in `vn-config.yaml` (set during `/vn-sync setup`; ask and record it if unset):
+
+- **`true`** — after each confirmed batch in `new`/`all`, mirror the assignments to the notes' Tana nodes automatically. The explicit `/vn-catalog sync` mode pushes ALL current frontmatter connections on demand (confirm the count first).
+- **`false`** — Tana is capture-only; never mirror. The user can still run `/vn-catalog sync` as a one-off, which offers to flip the config.
+
+How to mirror:
+
+1. Resolve field IDs once: `get_tag_schema` on `tana.voice_note_tag_id`, match the field names in `tana.field_labels` (`area`, `project`, `topic`), and cache the resulting IDs in `vn-config.yaml` under `tana.field_ids`.
+2. For each note in the batch (its node is `tana_id` in the frontmatter): `set_field_content` per field with the confirmed values.
+3. **Only confirmed assignments are ever mirrored** — never proposals. Skip silently when Tana is unavailable; local files stay canonical. Report how many notes were mirrored.
 
 ## Rules
 
@@ -77,4 +91,5 @@ If the user maintains the Super Folder fields in Tana too, offer to mirror confi
 - Vocabulary discipline: reuse before inventing; every new entity is flagged to the user.
 - `INDEX.md` is generated — regenerate, don't patch.
 - Keep entity names short and reusable (2–4 words, kebab-case in frontmatter, display case in collection files).
+- Tana mirroring follows `tana.sync_connections`; confirmed values only; local files canonical.
 - End with one concrete next step (usually a `/vn-process` suggestion for the freshest collection).
