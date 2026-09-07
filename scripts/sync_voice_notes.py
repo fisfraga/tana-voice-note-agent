@@ -30,6 +30,7 @@ import os
 import re
 import sys
 import unicodedata
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -195,7 +196,16 @@ class MCP:
         req.add_header("Authorization", self.auth)
         if self.sid:
             req.add_header("Mcp-Session-Id", self.sid)
-        with urllib.request.urlopen(req, timeout=90) as r:
+        try:
+            r = urllib.request.urlopen(req, timeout=90)
+        except urllib.error.URLError as e:
+            sys.exit(
+                f"Can't reach Tana MCP at {self.url}\n"
+                f"  {e.reason}\n"
+                "Start your Tana local MCP server (or set TANA_MCP_URL), then re-run.\n"
+                "Nothing was written — this command is always safe to retry."
+            )
+        with r:
             sid = r.headers.get("Mcp-Session-Id")
             if sid:
                 self.sid = sid
