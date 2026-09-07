@@ -78,7 +78,7 @@ Every v2 command and AI chat agent is represented — v3 consolidates where v2 h
 - **Move to Today / Set AI Model** → obsolete in an agent harness.
 - **Transcribe** → stays in Tana (the audio lives there); sync brings the transcript down.
 
-**Semantic consolidations (v3.1) — where to find each v2 command:**
+**Semantic consolidations (v3.0) — where to find each v2 command:**
 
 - **Basic Chat + Deep Chat** → [chat](understand/chat.md) (light/deep register).
 - **Cross-Connections + Synthesis of Knowledge** → [connect](connect/connect.md).

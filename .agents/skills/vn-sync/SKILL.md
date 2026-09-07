@@ -2,7 +2,7 @@
 name: vn-sync
 description: Sync voice notes from Tana into the local markdown archive — idempotent, config-driven, with enrichment (clean + summarize) and an MCP fallback when the script can't run.
 argument-hint: "[setup | --since N | --all | --dry-run | --no-enrich | status]"
-version: 3.1.0
+version: 3.0.0
 platforms: [macos, linux, windows]
 metadata:
   hermes:

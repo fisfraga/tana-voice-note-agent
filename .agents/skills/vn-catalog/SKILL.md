@@ -2,7 +2,7 @@
 name: vn-catalog
 description: Assign areas, projects, topics, tags, and entities to voice notes; build and maintain dynamic Collections; regenerate the archive index; optionally sync connections back to Tana.
 argument-hint: "[new | all | collections | index | collect \"<theme>\" | sync]"
-version: 3.1.0
+version: 3.0.0
 platforms: [macos, linux, windows]
 metadata:
   hermes:

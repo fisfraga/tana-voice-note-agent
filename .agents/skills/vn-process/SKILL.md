@@ -2,7 +2,7 @@
 name: vn-process
 description: Run Voice Note Agent commands on a note, a day, a collection, or a theme — suggests the best-fitting commands, runs them, saves and back-links the outputs.
 argument-hint: "[<note|date|collection|theme>] [command] | suggest | list"
-version: 3.1.0
+version: 3.0.0
 platforms: [macos, linux, windows]
 metadata:
   hermes:
