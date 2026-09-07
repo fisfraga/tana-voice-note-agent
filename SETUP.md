@@ -32,7 +32,9 @@ The token is only ever read from your harness config or that env var — never s
 
 ## 4. Choose where notes live
 
-Open `vn-config.yaml`:
+Open `vn-config.yaml` — it's created for you from `vn-config.example.yaml` on the first
+run of the sync script, and it's **gitignored**, so your workspace id, archive path and
+catalog vocabulary never end up in a commit (only the example is tracked):
 
 - Keep `archive.dir: "Voice-Notes"` to work inside this repo, **or**
 - Set an absolute path into your Second Brain, e.g. `archive.dir: "/Users/you/SecondBrain/Voice-Notes"`.

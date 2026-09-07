@@ -11,3 +11,7 @@ __pycache__/
 
 # Scratch / local experiments
 _scratch/
+
+# Personal configuration — created from vn-config.example.yaml on first run.
+# Holds your workspace id, archive path and catalog vocabulary: never commit it.
+vn-config.yaml

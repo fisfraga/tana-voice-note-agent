@@ -35,6 +35,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 CONFIG_PATH = REPO / "vn-config.yaml"
+EXAMPLE_PATH = REPO / "vn-config.example.yaml"
 URL_DEFAULT = "http://127.0.0.1:8262/mcp"
 MANIFEST_HEADER = [
     "# Voice Note Agent sync manifest — maintained by scripts/sync_voice_notes.py",
@@ -44,6 +45,17 @@ MANIFEST_HEADER = [
 
 
 # ---------------------------------------------------------------- config ----
+
+def bootstrap_config():
+    """First run: create the personal vn-config.yaml from the tracked example.
+    The personal file is gitignored so workspace ids, archive paths and catalog
+    vocabulary never reach the repo."""
+    if CONFIG_PATH.exists() or not EXAMPLE_PATH.exists():
+        return
+    CONFIG_PATH.write_text(EXAMPLE_PATH.read_text())
+    print(f"Created {CONFIG_PATH.name} from {EXAMPLE_PATH.name} "
+          "(gitignored — this is yours to edit).")
+
 
 def load_config(path):
     """Load vn-config.yaml. Uses PyYAML when available, else a minimal parser
@@ -330,6 +342,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="report, but write nothing")
     a = ap.parse_args()
 
+    bootstrap_config()
     cfg = load_config(CONFIG_PATH)
     mcp = MCP(*load_endpoint(cfg))
     mcp.init()
