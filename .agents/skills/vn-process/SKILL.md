@@ -17,6 +17,8 @@ The heart of the Voice Note Agent: 22 commands and 8 lenses, runnable on your lo
 
 ## Context to read first (do not skip)
 
+`<archive>` below means the archive root — `archive.dir` from `vn-config.yaml`, resolved absolute (it may point outside this repo, e.g. into your Second Brain). It is **not** literally `Voice-Notes/` unless the config says so.
+
 1. `vn-config.yaml` — archive location and output language.
 2. `commands/INDEX.md` — the command catalog (names, categories, scope, mode, when-to-use, the lens table).
 
@@ -28,9 +30,9 @@ Do **not** preload any command file or notes — load them at steps 2–3 below,
 
 Resolve the user's words into a set of note files:
 
-- **A note** — a path, a date + fuzzy title ("yesterday's note about pricing"), or "latest" (newest file in the archive). Fuzzy: `grep -il` the title words across `Voice-Notes/**/*.md`, offer matches if ambiguous.
+- **A note** — a path, a date + fuzzy title ("yesterday's note about pricing"), or "latest" (newest file in the archive). Fuzzy: `grep -il` the title words across `<archive>/**/*.md`, offer matches if ambiguous.
 - **A day / date range** — filenames start with `YYYY-MM-DD`, so a range is a directory listing.
-- **A collection** — a file in `Voice-Notes/Collections/`; its wikilinks are the member notes.
+- **A collection** — a file in `<archive>/Collections/`; its wikilinks are the member notes.
 - **A theme** — grep the archive for the theme's words (titles first, then bodies); show the hit list and confirm before proceeding. Offer to save the result as a new collection (via `/vn-catalog`).
 
 State the resolved scope in one line ("6 notes, 2026-08-19 → 2026-08-25") before going on. **Scope is a starting point, not a wall** — every command may pull broader context from the archive (related notes, collections, previous outputs, the `catalog:` vocabulary) when it sharpens the result.
@@ -48,7 +50,7 @@ Read the selected notes (titles + summaries first; full transcripts only when fe
 
 ### 4. Save the output — and link it back
 
-- Oneshot outputs and consolidated reports go to `Voice-Notes/Outputs/YYYY-MM-DD-<command>-<slug>.md` (subfolders `articles/`, `digests/`, `briefs/` where a command says so), with frontmatter: `type: vn-output`, `command`, `date`, `sources: ["[[note]]", ...]`.
+- Oneshot outputs and consolidated reports go to `<archive>/Outputs/YYYY-MM-DD-<command>-<slug>.md` (subfolders `articles/`, `digests/`, `briefs/` where a command says so), with frontmatter: `type: vn-output`, `command`, `date`, `sources: ["[[note]]", ...]`.
 - Update each source note's frontmatter (nothing else in the file):
   - append the command name to `processed:`
   - append to `outputs:` a wikilink **with a one-line value gloss**, e.g. `"[[2026-08-31-insight-crystallizer-fresh-start]] — named the core insight: the app is the practice"`. This is the note's memory of what came from it — visible in Obsidian's graph and readable at a glance.

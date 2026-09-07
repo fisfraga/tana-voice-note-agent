@@ -17,8 +17,10 @@ The v3 evolution of the Tana template's Autofill + Tag-and-Connect + Super Folde
 
 ## Context to read first (do not skip)
 
+`<archive>` below means the archive root — `archive.dir` from `vn-config.yaml`, resolved absolute (it may point outside this repo, e.g. into your Second Brain). It is **not** literally `Voice-Notes/` unless the config says so.
+
 1. `vn-config.yaml` — the `catalog:` vocabulary (areas, projects, topics) and `tana.sync_connections`.
-2. `Voice-Notes/Collections/` — list the existing collection files (names + frontmatter only).
+2. `<archive>/Collections/` — list the existing collection files (names + frontmatter only).
 
 Do **not** read all notes up front — scan frontmatter only (step 1) and open full notes only when classifying them.
 
@@ -26,7 +28,7 @@ Do **not** read all notes up front — scan frontmatter only (step 1) and open f
 
 ### `new` (default) — catalog uncataloged notes
 
-1. Find notes whose frontmatter has empty `areas`, `projects`, AND `topics` (grep for `areas: []` across `Voice-Notes/**/*.md`, excluding `Outputs/` and `Collections/`). Report the count; if large, propose batches of ~15, newest first.
+1. Find notes whose frontmatter has empty `areas`, `projects`, AND `topics` (grep for `areas: []` across `<archive>/**/*.md`, excluding `Outputs/` and `Collections/`). Report the count; if large, propose batches of ~15, newest first.
 2. For each note, read title + summary (transcript only if those are thin) and propose assignments — the Autofill discipline:
    - Choose ONLY from: `catalog.*` lists in `vn-config.yaml`, existing collection names, and values already used in other notes' frontmatter.
    - Propose a NEW area/project/topic only when nothing existing fits, clearly marked as new.
@@ -43,7 +45,7 @@ Do **not** read all notes up front — scan frontmatter only (step 1) and open f
 
 ### `collections` — review & maintain collections
 
-Each file in `Voice-Notes/Collections/` is:
+Each file in `<archive>/Collections/` is:
 
 ```markdown
 ---
@@ -68,7 +70,7 @@ updated: YYYY-MM-DD
 
 Grep the archive for the theme, show the hits, confirm membership, write the collection file (`type: theme`, or `manual` if the user picked by hand).
 
-### `index` — regenerate `Voice-Notes/INDEX.md`
+### `index` — regenerate `<archive>/INDEX.md`
 
 Rebuild from frontmatter only: total counts by year, then sections **By Area**, **By Project**, **By Topic** (each value → its notes as wikilinks, newest first), then **Collections** (link + one-liner), then **Recent outputs** (last 10 in `Outputs/`). Overwrite the whole file — it is generated, never hand-edited.
 

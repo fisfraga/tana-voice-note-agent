@@ -17,8 +17,10 @@ Works from Claude Code, Claude Cowork, and any harness that can run Python **or*
 
 ## Context to read first (do not skip)
 
+`<archive>` below means the archive root — `archive.dir` from `vn-config.yaml`, resolved absolute (it may point outside this repo, e.g. into your Second Brain). It is **not** literally `Voice-Notes/` unless the config says so.
+
 1. `vn-config.yaml` — the configuration (archive location, layout, workspace, tag, `archive.enrich`).
-2. `Voice-Notes/sync-manifest.tsv` — current sync state (skim the last ~20 lines).
+2. `<archive>/sync-manifest.tsv` — current sync state (skim the last ~20 lines).
 
 Do **not** read the whole archive or the command library for a sync.
 
@@ -56,7 +58,7 @@ On request, enrichment can also run standalone on notes the user names ("enrich 
 Only if Python is unavailable or the script errors on transport. Replicate its algorithm with Tana MCP tools, sequentially:
 
 1. `search_nodes` with `{ "and": [ { "hasType": "<voice_note_tag_id>" }, { "created": { "last": N } } ] }` (drop the `created` clause for `--all`).
-2. Load `Voice-Notes/sync-manifest.tsv`; skip node ids already `done`/`exists`/`skip`.
+2. Load `<archive>/sync-manifest.tsv`; skip node ids already `done`/`exists`/`skip`.
 3. For each remaining node: `read_node` (maxDepth 6); extract the title (strip trailing `#tags`, unwrap `![alt](url)` names, strip checkbox prefixes and trailing timestamps) and the children of the `**Transcript**:` and `**Transcript Summary (AI)**:` fields (labels per `vn-config.yaml`). If there's no Transcript field, the direct child bullets are the transcript; if there are none and the title is very long, the title IS the content.
 4. Write the file per the schema in `docs/frontmatter-schema.md`, at the path dictated by `archive.dir` + `archive.layout` + `archive.filename`. **Never overwrite an existing file** — mark the row `exists` instead.
 5. Append/update the manifest row (`date · node_id · mirrored · title`), run enrichment on the new files, and report the same tally the script would.

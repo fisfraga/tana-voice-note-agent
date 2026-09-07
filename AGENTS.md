@@ -10,7 +10,7 @@ The agent-side of the Tana Voice Note Agent: voice notes are captured and transc
 
 | Path | What it is |
 |---|---|
-| `vn-config.yaml` | THE config: Tana connection, archive location/layout, catalog vocabulary. Read it first. |
+| `vn-config.yaml` | THE config: Tana connection, archive location/layout, catalog vocabulary. Read it first. Gitignored — created from `vn-config.example.yaml` on first run. `<archive>` throughout these docs means the resolved `archive.dir`, which may point outside this repo. |
 | `.agents/skills/<name>/SKILL.md` | The three skills: `vn-sync`, `vn-process`, `vn-catalog`. Claude sees them via `.claude/skills/` symlinks; Hermes via `skills.external_dirs`. |
 | `commands/` | The command library — 22 commands in 5 categories plus 8 lens files in `commands/lenses/`. `commands/INDEX.md` is the catalog; a command file's **System Prompt** section becomes your working instructions when it runs (`lens-analysis` also loads its lens file). |
 | `scripts/sync_voice_notes.py` | Config-driven sync (pure stdlib). `--setup`, `--since N`, `--all`, `--dry-run`, `--limit N`. |
@@ -31,9 +31,9 @@ The agent-side of the Tana Voice Note Agent: voice notes are captured and transc
 1. **Local files are canonical.** Tana steps are optional everywhere: no Tana MCP in this session → skip every Tana step silently; nothing is lost.
 2. **Never overwrite a synced note file**, and **never edit a note's body** — the one exception is `/vn-sync` enrichment (clean + summarize), which touches only notes written in the current sync. Catalog and process edit frontmatter only.
 3. **Secrets:** the Tana token lives in the harness MCP config or `TANA_MCP_TOKEN`. Never write it to any file in this repo, never print it.
-4. **Outputs** go under `Voice-Notes/Outputs/` with frontmatter (`type: vn-output`, `command`, `sources`); each source note gets the command appended to `processed:` and a wikilink + value gloss appended to `outputs:`.
+4. **Outputs** go under `<archive>/Outputs/` with frontmatter (`type: vn-output`, `command`, `sources`); each source note gets the command appended to `processed:` and a wikilink + value gloss appended to `outputs:`.
 5. **The user's ideas are sacred** — commands develop their thinking, never replace it. Fidelity over polish.
-6. **Generated files** (`Voice-Notes/INDEX.md`, `sync-manifest.tsv`) are regenerated, never hand-patched.
+6. **Generated files** (`<archive>/INDEX.md`, `<archive>/sync-manifest.tsv`) are regenerated, never hand-patched.
 7. `build/build-feature` acts only inside folders the user explicitly names.
 8. End substantive turns with one concrete next step.
 
