@@ -2,6 +2,31 @@
 
 Everything adapts through `vn-config.yaml` and plain markdown files. No code changes needed for any of the below (the sync script reads the config).
 
+## What syncs
+
+By default **every voice memo in the workspace** — any Tana node with an audio recording attached. You do not need a supertag, and you do not need the Tana template; record a memo and it syncs.
+
+```yaml
+tana:
+  source: "all_audio"        # all_audio (default) | tagged | both
+  voice_note_tag_id: ""      # only read by tagged / both
+```
+
+| `source` | Syncs | Use when |
+|---|---|---|
+| `all_audio` | every node with audio attached | you just talk into Tana (most people) |
+| `tagged` | only nodes carrying `voice_note_tag_id` | your memos are deliberately marked, and you want *only* those |
+| `both` | the union | you have both loose memos and a tagged history — including notes whose audio was stripped after transcription |
+
+Narrow a single run without touching the config:
+
+```bash
+python3 scripts/sync_voice_notes.py --source tagged --tag <tagId>
+python3 scripts/sync_voice_notes.py --source both --tag <tagId>
+```
+
+`--tag <id>` on its own implies `--source tagged`. In a harness, just say it — *"/vn-sync, only my #voice note ones"* — and the skill applies it for that run only. `/vn-sync setup` asks the same question and counts your memos first, so you can see what each choice would pull in.
+
 ## Where notes live
 
 ```yaml

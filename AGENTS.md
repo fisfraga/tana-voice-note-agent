@@ -13,7 +13,7 @@ The agent-side of the Tana Voice Note Agent: voice notes are captured and transc
 | `vn-config.yaml` | THE config: Tana connection, archive location/layout, catalog vocabulary. Read it first. Gitignored — created from `vn-config.example.yaml` on first run. `<archive>` throughout these docs means the resolved `archive.dir`, which may point outside this repo. |
 | `.agents/skills/<name>/SKILL.md` | The three skills: `vn-sync`, `vn-process`, `vn-catalog`. Claude sees them via `.claude/skills/` symlinks; Hermes via `skills.external_dirs`. |
 | `commands/` | The command library — 22 commands in 5 categories plus 8 lens files in `commands/lenses/`. `commands/INDEX.md` is the catalog; a command file's **System Prompt** section becomes your working instructions when it runs (`lens-analysis` also loads its lens file). |
-| `scripts/sync_voice_notes.py` | Config-driven sync (pure stdlib). `--setup`, `--since N`, `--all`, `--dry-run`, `--limit N`. |
+| `scripts/sync_voice_notes.py` | Config-driven sync (pure stdlib). `--setup`, `--since N`, `--all`, `--source`, `--tag`, `--dry-run`, `--limit N`. Syncs every voice memo (`has: audio`) by default. |
 | `Voice-Notes/` | The archive (unless `archive.dir` points elsewhere): `YYYY/` note files, `Collections/`, `Outputs/`, `INDEX.md`, `sync-manifest.tsv`. |
 | `docs/` | `how-it-works.md` (architecture), `frontmatter-schema.md` (canonical note format), `customization.md` (layouts, adding commands). |
 | `SETUP.md` / `README.md` | Human onboarding. |
@@ -22,7 +22,7 @@ The agent-side of the Tana Voice Note Agent: voice notes are captured and transc
 
 | Skill | Job | Invoke |
 |---|---|---|
-| `vn-sync` | Tana → archive, then enrichment of new arrivals (clean raw transcripts, fill missing summaries). Script fast path; MCP fallback spelled out in the SKILL. | `/vn-sync [setup|--since N|--all|--no-enrich|status]` |
+| `vn-sync` | Tana → archive, then enrichment of new arrivals (clean raw transcripts, fill missing summaries). Script fast path; MCP fallback spelled out in the SKILL. | `/vn-sync [setup|--since N|--all|--source all_audio\|tagged\|both|--tag <id>|--no-enrich|status]` |
 | `vn-process` | Select scope (note/day/range/collection/theme) → suggest top-3 commands → run → save output + back-link it into the sources → optional Tana write-back. | `/vn-process [scope] [command]` |
 | `vn-catalog` | Frontmatter areas/projects/topics/entities, Collections maintenance, INDEX regeneration, optional connection sync to Tana (`tana.sync_connections`). | `/vn-catalog [new|all|collections|collect "<theme>"|index|sync]` |
 
