@@ -10,7 +10,7 @@ v1 and v2 lived inside Tana, where every command ran on one note at a time. v3 f
 
 ## What you get
 
-- **`/vn-sync`** — pull your `#voice note` nodes out of Tana into a chronological markdown archive (`Voice-Notes/2026/2026-08-31-my-idea.md`), with frontmatter, idempotent re-runs, and a never-overwrite guarantee — then enrich new arrivals (clean raw transcripts, fill missing summaries). Python script fast path, pure-MCP fallback.
+- **`/vn-sync`** — pull your voice memos out of Tana into a chronological markdown archive (`Voice-Notes/2026/2026-08-31-my-idea.md`), with frontmatter, idempotent re-runs, and a never-overwrite guarantee. **Every voice memo syncs by default** — any node with a recording attached, tagged or not; narrowing to a supertag is opt-in (`--source tagged`) — then enrich new arrivals (clean raw transcripts, fill missing summaries). Python script fast path, pure-MCP fallback.
 - **`/vn-process`** — the command router. Point it at one note, a day, a date range, a collection, or a theme; it suggests the best-fitting commands and runs them. **22 commands · 8 wisdom lenses** across five categories:
   - 🔍 **Understand** — Chat, Insight Crystallizer, Main Themes, Cognitive Bias Analyzer, Knowledge Gap Explorer
   - 🕸️ **Connect** — Connect, Time Evolution, Perspectives, and Lens Analysis with eight lenses: Metaphors, Scales, Mental Models, Consciousness, Hermetic, Zodiac, Four Agreements, Map of Consciousness
@@ -42,7 +42,7 @@ claude   # or open the folder in Claude Cowork
 ```
  Tana (capture + transcribe)          This repo (the agent)
 ┌──────────────────────────┐   sync   ┌─────────────────────────────┐
-│ 🎤 #voice note nodes     │ ───────► │ Voice-Notes/YYYY/*.md       │
+│ 🎤 voice memos (audio)   │ ───────► │ Voice-Notes/YYYY/*.md       │
 │    Transcript field      │          │  ├── Collections/*.md       │
 │    Summary field         │  (opt.)  │  ├── Outputs/*.md           │
 │    Super Folders         │ ◄─────── │  └── INDEX.md               │
@@ -61,7 +61,7 @@ Details: [docs/how-it-works.md](docs/how-it-works.md) · [docs/frontmatter-schem
 ## Requirements
 
 - [Tana](https://tana.inc) with the local API/MCP server enabled (desktop app)
-- The [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) for the capture side (recommended — any `#voice note`-style supertag with a Transcript field also works)
+- The [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) for the capture side (recommended, not required — plain Tana voice memos sync out of the box, and any `#voice note`-style supertag with a Transcript field works too)
 - An AI agent harness (Claude Code / Cowork recommended)
 - Python 3.9+ for the sync fast path (optional — there's a pure-MCP fallback)
 

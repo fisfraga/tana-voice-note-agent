@@ -15,3 +15,15 @@ _scratch/
 # Personal configuration — created from vn-config.example.yaml on first run.
 # Holds your workspace id, archive path and catalog vocabulary: never commit it.
 vn-config.yaml
+
+# Your voice notes are private. The default archive.dir is INSIDE this repo, so
+# without these rules a `git add .` after a sync would publish every note you
+# ever spoke — plus the generated outputs, collections and index built from them,
+# and the tokenized Firebase audio URLs Tana embeds in captured memos.
+# Only the folder scaffold (the READMEs) stays tracked.
+/Voice-Notes/**
+!/Voice-Notes/README.md
+!/Voice-Notes/Collections/
+!/Voice-Notes/Collections/README.md
+!/Voice-Notes/Outputs/
+!/Voice-Notes/Outputs/README.md

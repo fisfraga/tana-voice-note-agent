@@ -83,7 +83,7 @@ Governed by `tana.sync_connections` in `vn-config.yaml` (set during `/vn-sync se
 
 How to mirror:
 
-1. Resolve field IDs once: `get_tag_schema` on `tana.voice_note_tag_id`, match the field names in `tana.field_labels` (`area`, `project`, `topic`), and cache the resulting IDs in `vn-config.yaml` under `tana.field_ids`.
+1. Resolve field IDs once: `get_tag_schema` on `tana.voice_note_tag_id`, match the field names in `tana.field_labels` (`area`, `project`, `topic`), and cache the resulting IDs in `vn-config.yaml` under `tana.field_ids`. **This step needs a supertag.** With `tana.source: all_audio` and no `voice_note_tag_id` set, untagged memos have no Super Folder fields to write back to — say so, leave `sync_connections` off, and keep the catalog local-only.
 2. For each note in the batch (its node is `tana_id` in the frontmatter): `set_field_content` per field with the confirmed values.
 3. **Only confirmed assignments are ever mirrored** — never proposals. Skip silently when Tana is unavailable; local files stay canonical. Report how many notes were mirrored.
 

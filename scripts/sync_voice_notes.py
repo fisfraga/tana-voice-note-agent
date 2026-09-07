@@ -2,8 +2,13 @@
 """
 Tana Voice Note Agent — sync script (v3).
 
-Mirrors #voice-note-tagged nodes from Tana's local MCP server into a folder of
-markdown files with YAML frontmatter. Pure stdlib; PyYAML is used only if present.
+Mirrors your voice memos from Tana's local MCP server into a folder of markdown
+files with YAML frontmatter. Pure stdlib; PyYAML is used only if present.
+
+By default it syncs EVERY voice memo in the workspace — any node with an audio
+recording attached (Tana's `has: audio`), whether or not it carries a supertag.
+Narrowing to a supertag is opt-in: `--source tagged --tag <id>`, or `tana.source`
+in vn-config.yaml.
 
 Configuration lives in vn-config.yaml at the repo root (see that file for docs).
 The bearer token is NEVER stored in this repo: it is read from the harness MCP
@@ -11,8 +16,10 @@ config (~/.claude.json -> mcpServers.<name>.headers.Authorization) or from the
 TANA_MCP_TOKEN environment variable.
 
 Usage:
-  python3 scripts/sync_voice_notes.py --setup            # first-time: pick workspace + tag
-  python3 scripts/sync_voice_notes.py                    # sync notes created in the last 30 days
+  python3 scripts/sync_voice_notes.py --setup            # first-time: pick workspace + what to sync
+  python3 scripts/sync_voice_notes.py                    # sync memos created in the last 30 days
+  python3 scripts/sync_voice_notes.py --source tagged --tag <id>   # only one supertag
+  python3 scripts/sync_voice_notes.py --source both      # memos + tagged nodes
   python3 scripts/sync_voice_notes.py --since 90         # widen the window
   python3 scripts/sync_voice_notes.py --all              # full history
   python3 scripts/sync_voice_notes.py --dry-run          # show what would be written
@@ -244,6 +251,7 @@ TIMESTAMP_RE = re.compile(
 PREFIX_RE = re.compile(r"^\s*\[[ xX]\]\s*")                  # Tana checkbox / status prefix
 MEDIA_RE = re.compile(r"^!\[([^\]]*)\]\([^)]*\)\s*$")        # node named by media embed -> alt text
 TAGSUFFIX_RE = re.compile(r"\s*#[\w_-]+(\s*,\s*#[\w_-]+)*\s*$")
+CAPTURE_RE = re.compile(r"^(voice\s+memo|audio)\s+captured\b", re.I)   # Tana's generic capture label
 
 
 def clean(line):
@@ -302,6 +310,23 @@ def parse(md, transcript_label, summary_label):
     return title, transcript, summary
 
 
+def derive_title(title, transcript):
+    """Tana names an untagged capture 'Voice memo captured Mon, Feb 9, 12:17' —
+    the same label on every recording, which would make every filename and index
+    row look alike. When that generic label is all we have, lead with the words
+    actually spoken instead."""
+    if not transcript:
+        return title
+    if title and not CAPTURE_RE.match(title.strip()):
+        return title
+    spoken = " ".join(" ".join(transcript).split())
+    if not spoken:
+        return title
+    if len(spoken) <= 70:
+        return spoken
+    return spoken[:70].rsplit(" ", 1)[0].rstrip(" ,.;:—-") + "…"
+
+
 def derive_tags(title, keywords):
     tags = ["voice-note"]
     t = (title or "").lower()
@@ -336,6 +361,57 @@ def write_manifest(path, rows, order):
     path.write_text("\n".join(lines) + "\n")
 
 
+# ------------------------------------------------------------------ query ---
+
+SOURCE_MODES = ("all_audio", "tagged", "both")
+
+
+def build_query(source, tag_id, since=None):
+    """The search_nodes query for a source mode.
+
+    all_audio (default) is Tana's `has: audio` — every node with a recording
+    attached, tagged or not. That is what a voice memo IS; a supertag is one
+    way some people mark them, not a requirement of the format.
+    """
+    if source == "tagged":
+        clause = {"hasType": tag_id}
+    elif source == "both":
+        clause = {"or": [{"has": "audio"}, {"hasType": tag_id}]}
+    else:
+        clause = {"has": "audio"}
+    query = {"and": [clause]}
+    if since is not None:
+        query["and"].append({"created": {"last": since}})
+    return query
+
+
+def resolve_source(cfg, cli_source, cli_tag):
+    """Settle the source mode from CLI flags over config, and fail loudly only
+    when a tag-based mode was asked for without a tag."""
+    source = cli_source or cfg_get(cfg, "tana.source", "all_audio") or "all_audio"
+    if source not in SOURCE_MODES:
+        sys.exit(f"unknown source '{source}' — choose one of: {', '.join(SOURCE_MODES)}")
+    tag_id = cli_tag or cfg_get(cfg, "tana.voice_note_tag_id")
+    if cli_tag and not cli_source:
+        source = "tagged"                     # --tag alone means "only that tag"
+    if source in ("tagged", "both") and not tag_id:
+        sys.exit(
+            f"source '{source}' needs a supertag, but tana.voice_note_tag_id is empty.\n"
+            "  - run with --setup to pick one, or\n"
+            "  - pass --tag <tagId>, or\n"
+            "  - use the default --source all_audio to sync every voice memo."
+        )
+    return source, tag_id
+
+
+def describe_source(source, tag_name=""):
+    if source == "tagged":
+        return f"notes tagged {tag_name or 'your voice-note supertag'}"
+    if source == "both":
+        return f"voice memos (audio) and notes tagged {tag_name or 'your voice-note supertag'}"
+    return "voice memos (every node with audio attached)"
+
+
 # ------------------------------------------------------------------ setup ---
 
 def run_setup(mcp, cfg):
@@ -345,19 +421,54 @@ def run_setup(mcp, cfg):
         print(f"  [{i}] {ws.get('name')}  ({ws.get('id')})")
     idx = input("Which workspace holds your voice notes? [number]: ").strip()
     ws = workspaces[int(idx)]
-    print(f"\nTags in {ws['name']} (looking for your voice note supertag):")
-    tags = mcp.call_json("list_tags", {"workspaceId": ws["id"], "limit": 200})
-    candidates = [t for t in tags if "voice" in (t.get("name") or "").lower()] or tags
-    for i, t in enumerate(candidates):
-        print(f"  [{i}] #{t.get('name')}  ({t.get('id')})")
-    idx = input("Which tag marks a voice note? [number]: ").strip()
-    tag = candidates[int(idx)]
-    save_config_values(CONFIG_PATH, {
+
+    def count(query):
+        try:
+            r = mcp.call_json("search_nodes", {"query": query, "limit": 1000,
+                                               "workspaceIds": [ws["id"]]})
+            if isinstance(r, dict):
+                r = r.get("nodes") or r.get("results") or []
+            return len(r)
+        except Exception:
+            return -1
+
+    # -- what counts as a voice note ----------------------------------------
+    n_audio = count({"and": [{"has": "audio"}]})
+    print(f"\n{ws['name']} holds {n_audio} voice memo(s) — nodes with a recording attached.")
+    print("\nWhat should sync pull in?")
+    print("  [1] every voice memo                                   (default, recommended)")
+    print("  [2] only memos carrying a specific supertag")
+    print("  [3] both — every voice memo plus everything with that supertag")
+    choice = input("Choose [1]: ").strip() or "1"
+    source = {"1": "all_audio", "2": "tagged", "3": "both"}.get(choice, "all_audio")
+
+    tag = None
+    if source in ("tagged", "both"):
+        print(f"\nTags in {ws['name']} (voice-looking ones first):")
+        tags = mcp.call_json("list_tags", {"workspaceId": ws["id"], "limit": 200})
+        voiceish = [t for t in tags if "voice" in (t.get("name") or "").lower()]
+        candidates = voiceish + [t for t in tags if t not in voiceish] if voiceish else tags
+        candidates = candidates[:40]
+        for i, t in enumerate(candidates):
+            n = count({"and": [{"hasType": t["id"]}]})
+            print(f"  [{i}] #{t.get('name')}  — {n} node(s)")
+        idx = input("Which tag marks a voice note? [number]: ").strip()
+        tag = candidates[int(idx)]
+
+    updates = {
         "tana.workspace_id": ws["id"],
         "tana.workspace_name": ws["name"],
-        "tana.voice_note_tag_id": tag["id"],
-    })
-    print(f"\nSaved to {CONFIG_PATH.name}: workspace '{ws['name']}', tag #{tag.get('name')}.")
+        "tana.source": source,
+    }
+    if tag:
+        updates["tana.voice_note_tag_id"] = tag["id"]
+    save_config_values(CONFIG_PATH, updates)
+
+    tag_name = f"#{tag.get('name')}" if tag else ""
+    print(f"\nSaved to {CONFIG_PATH.name}: workspace '{ws['name']}', "
+          f"syncing {describe_source(source, tag_name)}.")
+    if source == "all_audio":
+        print("Change your mind later with --source tagged --tag <id>, or edit tana.source.")
     print("Run the script again (optionally with --dry-run) to sync.")
 
 
@@ -378,6 +489,11 @@ def main():
     ap.add_argument("--all", action="store_true", help="consider the entire history")
     ap.add_argument("--limit", type=int, default=0, help="stop after writing N files")
     ap.add_argument("--dry-run", action="store_true", help="report, but write nothing")
+    ap.add_argument("--source", choices=SOURCE_MODES, default=None,
+                    help="what counts as a voice note: all_audio (default — every node with "
+                         "a recording attached), tagged (only voice_note_tag_id), or both")
+    ap.add_argument("--tag", default=None, metavar="TAG_ID",
+                    help="sync only nodes with this supertag id (implies --source tagged)")
     a = ap.parse_args()
 
     bootstrap_config()
@@ -389,9 +505,7 @@ def main():
         run_setup(mcp, cfg)
         return
 
-    tag_id = cfg_get(cfg, "tana.voice_note_tag_id")
-    if not tag_id:
-        sys.exit("vn-config.yaml has no tana.voice_note_tag_id — run with --setup first.")
+    source_mode, tag_id = resolve_source(cfg, a.source, a.tag)
     workspace_id = cfg_get(cfg, "tana.workspace_id")
     workspace_name = cfg_get(cfg, "tana.workspace_name", "Tana")
     t_label = cfg_get(cfg, "tana.field_labels.transcript", "Transcript")
@@ -406,16 +520,15 @@ def main():
     archive.mkdir(parents=True, exist_ok=True)
 
     # -- discover ------------------------------------------------------------
-    query = {"and": [{"hasType": tag_id}]}
-    if not a.all:
-        query["and"].append({"created": {"last": a.since}})
+    query = build_query(source_mode, tag_id, None if a.all else a.since)
     args = {"query": query, "limit": 1000}
     if workspace_id:
         args["workspaceIds"] = [workspace_id]
     found = mcp.call_json("search_nodes", args)
     if isinstance(found, dict):      # some servers wrap the array
         found = found.get("nodes") or found.get("results") or []
-    print(f"found {len(found)} tagged notes" + ("" if a.all else f" in the last {a.since} days"))
+    print(f"found {len(found)} {describe_source(source_mode)}"
+          + ("" if a.all else f" in the last {a.since} days"))
 
     rows, order = load_manifest(manifest_path)
     for n in found:
@@ -453,6 +566,7 @@ def main():
                     print(f"  ! {nid}: no transcript ({title[:50]})", file=sys.stderr)
                     continue
 
+            title = derive_title(title, transcript)
             slug_src = re.sub(r"\s*\(.*?\)\s*$", "", title).strip() or title
             outdir = note_dir(archive, layout, r["date"])
             path = outdir / fname_pattern.format(date=r["date"], slug=slugify(slug_src))

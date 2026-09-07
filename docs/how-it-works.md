@@ -5,13 +5,13 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 1. CAPTURE (Tana)                                                       │
-│    You speak → Tana transcribes → #voice note node with Transcript      │
+│    You speak → Tana transcribes → voice memo node (audio + text)        │
 │    and Summary fields (the paid Tana template automates this)           │
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │  /vn-sync
                                │  scripts/sync_voice_notes.py talks to Tana's
                                │  local MCP server (http://127.0.0.1:8262/mcp):
-                               │  search_nodes(hasType: your tag) → read_node
+                               │  search_nodes(has: audio) → read_node
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 2. ARCHIVE (local, canonical)                                           │

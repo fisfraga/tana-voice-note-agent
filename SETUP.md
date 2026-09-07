@@ -4,8 +4,9 @@ Five steps, ~5 minutes. You'll connect Tana's local API to your agent harness, t
 
 ## 1. Capture side — Tana
 
-- Use the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) (recommended): voice notes get a `#voice note` supertag with **Transcript** and **Transcript Summary (AI)** fields, auto-transcribed on capture.
-- Or roll your own: any supertag on nodes whose transcript lives in a field or in child bullets works. If your field labels differ, set them in `vn-config.yaml → tana.field_labels`.
+- **Nothing special required:** any Tana voice memo syncs — record one and it has an audio recording attached, which is all `/vn-sync` looks for by default.
+- Use the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) (recommended): voice notes get a `#voice note` supertag with **Transcript** and **Transcript Summary (AI)** fields, auto-transcribed on capture. Setup can then narrow the sync to that supertag if you want only those.
+- Or roll your own: transcripts are read from a Transcript field *or* from the node's child bullets, so plain memos and custom supertags both work. If your field labels differ, set them in `vn-config.yaml → tana.field_labels`.
 
 ## 2. Enable Tana's local MCP server
 
@@ -43,12 +44,14 @@ catalog vocabulary never end up in a commit (only the example is tracked):
 - `archive.enrich` (default `true`) cleans raw transcripts and fills missing summaries right after each sync.
 - `tana.sync_connections` decides whether confirmed areas/projects/topics mirror back to your Tana Super Folder fields (`/vn-sync setup` asks; default `false` = Tana is capture-only).
 
+> **Your notes stay yours.** `Voice-Notes/` is gitignored — synced notes, generated outputs, collections, the index and the manifest are never committed, even though the default archive lives inside this repo. Only the folder scaffold (the READMEs) is tracked. If you point `archive.dir` somewhere else, that folder is outside git entirely. `vn-config.yaml` is gitignored too; `vn-config.example.yaml` is the tracked template.
+
 ## 5. First sync
 
 In your harness, run:
 
 ```
-/vn-sync setup     # picks workspace + voice-note tag, writes them to vn-config.yaml
+/vn-sync setup     # picks workspace + what to sync, writes them to vn-config.yaml
 /vn-sync --all     # first full sync (or plain /vn-sync for the last 30 days)
 ```
 
@@ -76,5 +79,5 @@ Then `/vn-catalog` to organize the new files, and `/vn-process` to start working
 - **`No Tana token found`** — redo step 3; check `claude mcp list` shows `tana-local`.
 - **Connection refused** — Tana desktop isn't running, or the local API is disabled.
 - **`no transcript` failures on sync** — the note hasn't been transcribed in Tana yet (open it in Tana; the template's automation fills the Transcript field). Re-run `/vn-sync` later; failed rows retry automatically.
-- **Wrong notes synced** — your voice-note tag choice was too broad; re-run `/vn-sync setup` and pick the precise supertag.
+- **More notes than you expected** — the default syncs *every* voice memo in the workspace. To take only the ones carrying a supertag, re-run `/vn-sync setup` and choose option [2], or run one sync with `--source tagged --tag <id>`.
 - **Connection sync-back fails** — `tana.field_labels` must match your template's field names exactly (rename them in `vn-config.yaml` for non-English templates); delete `tana.field_ids` to force re-resolution. Sync-back needs Tana MCP in the session — the script alone can't do it.
