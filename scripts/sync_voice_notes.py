@@ -474,6 +474,29 @@ def run_setup(mcp, cfg):
 
 # ------------------------------------------------------------------- main ---
 
+TANA_ID_RE = re.compile(r"^tana_id:\s*[\"']?([A-Za-z0-9_-]+)", re.M)
+
+
+def index_by_tana_id(archive):
+    """Map every tana_id already in the archive to its file.
+
+    Dedupe cannot rely on the filename alone: a note retitled in Tana slugs
+    differently, and archives predating this script may use another slugging
+    convention entirely (accents kept, say). tana_id is the stable identity,
+    and it is in every note's frontmatter.
+    """
+    index = {}
+    for f in archive.rglob("*.md"):
+        try:
+            head = f.read_text(errors="replace")[:1500]
+        except OSError:
+            continue
+        m = TANA_ID_RE.search(head)
+        if m:
+            index.setdefault(m.group(1), f)
+    return index
+
+
 def note_dir(archive, layout, date):
     if layout == "by-month":
         return archive / date[:4] / date[5:7]
@@ -518,6 +541,7 @@ def main():
     fname_pattern = cfg_get(cfg, "archive.filename", "{date}-{slug}.md")
     manifest_path = archive / "sync-manifest.tsv"
     archive.mkdir(parents=True, exist_ok=True)
+    id_index = index_by_tana_id(archive)
 
     # -- discover ------------------------------------------------------------
     query = build_query(source_mode, tag_id, None if a.all else a.since)
@@ -570,9 +594,15 @@ def main():
             slug_src = re.sub(r"\s*\(.*?\)\s*$", "", title).strip() or title
             outdir = note_dir(archive, layout, r["date"])
             path = outdir / fname_pattern.format(date=r["date"], slug=slugify(slug_src))
-            if path.exists():
+            twin = id_index.get(nid)
+            if twin is None and path.exists():
+                twin = path
+            if twin is not None:
                 skipped += 1
                 r["mirrored"] = "exists"
+                if twin.name != path.name:
+                    print(f"  = {nid}: already archived as {twin.name} "
+                          f"(would have been {path.name})")
                 continue
 
             source = f"Tana — {workspace_name}" + (f" ({workspace_id})" if workspace_id else "")
