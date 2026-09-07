@@ -67,9 +67,28 @@ def load_config(path):
         return yaml.safe_load(text) or {}
     except ImportError:
         pass
+    # Join wrapped inline lists ("key: [a, b,\n           c]") into one logical line.
+    # Without this an unterminated "[" fell through to the scalar branch and the
+    # value became the truncated *string* "[a, b," — silently, with no error.
+    logical, buf = [], None
+    for raw in text.split("\n"):
+        bare = raw.split("#", 1)[0].rstrip() if not raw.strip().startswith("#") else ""
+        if buf is not None:
+            buf += " " + bare.strip()
+            if "]" in bare:
+                logical.append(buf)
+                buf = None
+            continue
+        if bare.partition(":")[2].strip().startswith("[") and "]" not in bare:
+            buf = bare
+        else:
+            logical.append(raw)
+    if buf is not None:
+        logical.append(buf)          # unterminated list: let the scalar branch see it
+
     root, stack = {}, [(-1, {})]
     stack[0] = (-1, root)
-    for raw in text.split("\n"):
+    for raw in logical:
         line = raw.split("#", 1)[0].rstrip() if not raw.strip().startswith("#") else ""
         if not line.strip():
             continue
@@ -89,7 +108,16 @@ def load_config(path):
         elif val.startswith("[") and val.endswith("]"):
             parent[key] = [v.strip().strip("'\"") for v in val[1:-1].split(",") if v.strip()]
         else:
-            parent[key] = val.strip().strip("'\"")
+            scalar = val.strip()
+            if scalar[:1] not in "'\"":
+                low = scalar.lower()
+                if low in ("true", "false"):      # keep booleans boolean: the
+                    parent[key] = low == "true"   # string 'false' is truthy
+                    continue
+                if low in ("null", "~", ""):
+                    parent[key] = None
+                    continue
+            parent[key] = scalar.strip("'\"")
     return root
 
 
