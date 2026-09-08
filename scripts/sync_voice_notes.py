@@ -252,6 +252,11 @@ PREFIX_RE = re.compile(r"^\s*\[[ xX]\]\s*")                  # Tana checkbox / s
 MEDIA_RE = re.compile(r"^!\[([^\]]*)\]\([^)]*\)\s*$")        # node named by media embed -> alt text
 TAGSUFFIX_RE = re.compile(r"\s*#[\w_-]+(\s*,\s*#[\w_-]+)*\s*$")
 CAPTURE_RE = re.compile(r"^(voice\s+memo|audio)\s+captured\b", re.I)   # Tana's generic capture label
+CALENDAR_RE = re.compile(                                    # a Day/Week node, never a note title
+    r"^(today|yesterday|tomorrow|week\s+\d+|\d{4}$|"
+    r"(mon|tues|wednes|thurs|fri|satur|sun)day\b|"
+    r"(mon|tue|wed|thu|fri|sat|sun),)", re.I)
+MEDIA_NAME_RE = re.compile(r"^(audio/|video/|image/|\d+\.(m4a|mp3|wav)\b)", re.I)
 
 
 def clean(line):
@@ -310,14 +315,36 @@ def parse(md, transcript_label, summary_label):
     return title, transcript, summary
 
 
-def derive_title(title, transcript):
+def parent_title(breadcrumb):
+    """The note a voice memo hangs under, from the search result's breadcrumb.
+
+    `has: audio` matches the memo node itself — in Tana that is usually a child
+    named 'Voice memo captured ...' sitting under the node that carries the real
+    title. The breadcrumb's last entry IS that node's name, so it gives us the
+    human title without a parent lookup (the API has no upward query).
+    Returns None when the parent is a Day/Week node or another media node.
+    """
+    if not breadcrumb:
+        return None
+    name = TIMESTAMP_RE.sub("", str(breadcrumb[-1] or "")).strip()
+    if not name or len(name) < 3:
+        return None
+    if CALENDAR_RE.match(name) or CAPTURE_RE.match(name) or MEDIA_NAME_RE.match(name):
+        return None
+    return name
+
+
+def derive_title(title, transcript, breadcrumb=None):
     """Tana names an untagged capture 'Voice memo captured Mon, Feb 9, 12:17' —
     the same label on every recording, which would make every filename and index
-    row look alike. When that generic label is all we have, lead with the words
-    actually spoken instead."""
-    if not transcript:
-        return title
+    row look alike. Prefer the parent note's title; fall back to the words
+    actually spoken."""
     if title and not CAPTURE_RE.match(title.strip()):
+        return title
+    parent = parent_title(breadcrumb)
+    if parent:
+        return parent
+    if not transcript:
         return title
     spoken = " ".join(" ".join(transcript).split())
     if not spoken:
@@ -477,6 +504,34 @@ def run_setup(mcp, cfg):
 TANA_ID_RE = re.compile(r"^tana_id:\s*[\"']?([A-Za-z0-9_-]+)", re.M)
 
 
+PLACEHOLDER_RE = re.compile(
+    r"transcript content was not available|transcript field was empty", re.I)
+
+
+def fingerprint(text):
+    """A stable key for 'this is the same recording', independent of node id.
+
+    Needed because one recording can be reachable as two nodes: the memo child
+    that `has: audio` matches, and the parent that carries the supertag. They
+    have different tana_ids, so an id index alone lets the same words be written
+    twice. Normalised opening words of the transcript are the same either way.
+    """
+    words = re.sub(r"[^\w\s]", " ", (text or "").lower())
+    words = " ".join(words.split())
+    # Placeholders are identical across unrelated notes — six notes in one real
+    # archive share the "transcript not available" stub. Fingerprinting those
+    # would make every future stub look like a duplicate of the first.
+    if PLACEHOLDER_RE.search(words) or len(words) < 80:
+        return None
+    return words[:300]
+
+
+def transcript_of(md):
+    """The transcript body of an archived note file."""
+    m = re.search(r"^## Transcript\s*$(.*?)(?=^## |\Z)", md, re.M | re.S)
+    return m.group(1) if m else ""
+
+
 def index_by_tana_id(archive):
     """Map every tana_id already in the archive to its file.
 
@@ -485,16 +540,19 @@ def index_by_tana_id(archive):
     convention entirely (accents kept, say). tana_id is the stable identity,
     and it is in every note's frontmatter.
     """
-    index = {}
+    index, prints = {}, {}
     for f in archive.rglob("*.md"):
         try:
-            head = f.read_text(errors="replace")[:1500]
+            text = f.read_text(errors="replace")
         except OSError:
             continue
-        m = TANA_ID_RE.search(head)
+        m = TANA_ID_RE.search(text[:4000])
         if m:
             index.setdefault(m.group(1), f)
-    return index
+        fp = fingerprint(transcript_of(text))
+        if fp:
+            prints.setdefault(fp, f)
+    return index, prints
 
 
 def note_dir(archive, layout, date):
@@ -541,7 +599,7 @@ def main():
     fname_pattern = cfg_get(cfg, "archive.filename", "{date}-{slug}.md")
     manifest_path = archive / "sync-manifest.tsv"
     archive.mkdir(parents=True, exist_ok=True)
-    id_index = index_by_tana_id(archive)
+    id_index, fp_index = index_by_tana_id(archive)
 
     # -- discover ------------------------------------------------------------
     query = build_query(source_mode, tag_id, None if a.all else a.since)
@@ -565,7 +623,8 @@ def main():
         else:
             date = str(created or "")[:10] or dt.date.today().isoformat()
         rows[nid] = {"date": date, "node_id": nid, "mirrored": "pending",
-                     "title": (n.get("name") or "").replace("\t", " ")[:160]}
+                     "title": (n.get("name") or "").replace("\t", " ")[:160],
+                     "breadcrumb": n.get("breadcrumb") or []}
         order.append(nid)
     order.sort(key=lambda nid: rows[nid]["date"])
 
@@ -590,11 +649,11 @@ def main():
                     print(f"  ! {nid}: no transcript ({title[:50]})", file=sys.stderr)
                     continue
 
-            title = derive_title(title, transcript)
+            title = derive_title(title, transcript, r.get("breadcrumb"))
             slug_src = re.sub(r"\s*\(.*?\)\s*$", "", title).strip() or title
             outdir = note_dir(archive, layout, r["date"])
             path = outdir / fname_pattern.format(date=r["date"], slug=slugify(slug_src))
-            twin = id_index.get(nid)
+            twin = id_index.get(nid) or fp_index.get(fingerprint("\n".join(transcript)))
             if twin is None and path.exists():
                 twin = path
             if twin is not None:
