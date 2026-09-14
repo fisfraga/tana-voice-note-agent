@@ -31,16 +31,32 @@ tana:
   # --setup fills it if you choose a tag-based mode.
   voice_note_tag_id: ""      # e.g. the id of your #voice note supertag
 
+  # Other supertags that ALSO mark voice notes — a legacy "#voice memo", a
+  # "#conversation voice note"... Read by tagged / both and by --history.
+  # Inline list only (the no-PyYAML fallback parser doesn't read block lists):
+  #   extra_tag_ids: ["abc123", "def456"]
+  extra_tag_ids: []
+
   # The field labels the parser looks for in a note's children, exactly as they
   # appear in your Tana template. Change these if you renamed the fields or use
-  # a non-English template. The area/project/topic labels name the Super Folder
-  # fields used when sync_connections is on.
+  # a non-English template.
   field_labels:
     transcript: "Transcript"
     summary: "Transcript Summary (AI)"
-    area: "Area(s)"
-    project: "Project(s)"
-    topic: "Topic(s)"
+
+  # Super Folders: Tana field label -> frontmatter key. When a synced node
+  # carries one of these fields, its values arrive pre-filled in the note's
+  # frontmatter (kebab-case) and the Tana node ids are kept in `tana_refs`.
+  # Labels match loosely: "Area", "Areas" and "Area(s)" are all the same.
+  # Add any other superfolder you use, e.g.   people: "Person(s)"
+  category_fields:
+    areas: "Area(s)"
+    projects: "Project(s)"
+    topics: "Topic(s)"
+
+  # The supertags whose instances ARE your vocabulary (your #area / #project /
+  # #topic tags, or the template's merge tags). Filled by /vn-catalog vocab.
+  category_tag_ids: {}       # e.g. {areas: "<tag id>", projects: "...", topics: "..."}
 
   # Should /vn-catalog mirror confirmed areas/projects/topics back to the
   # note's Tana Super Folder fields? false = Tana is capture-only (default).
@@ -50,6 +66,13 @@ tana:
   # Cache of Tana field IDs, resolved once by /vn-catalog sync via
   # get_tag_schema. Leave empty; the agent fills it.
   field_ids: {}
+
+  # Full-history import (python3 scripts/sync_voice_notes.py --history).
+  # Tana returns at most 1000 search results per call, so the sweep walks the
+  # workspace backwards in date windows; a window that fills up is halved.
+  history:
+    window_days: 90          # initial window
+    batch: 0                 # 0 = fetch everything; N = stop after N notes (re-run to continue)
 
 archive:
   # Where synced notes live. A path relative to this repo, or an ABSOLUTE path
@@ -80,6 +103,11 @@ catalog:
   areas: []          # e.g. [health, career, relationships, creativity]
   projects: []       # e.g. [product-launch, book-draft]
   topics: []         # e.g. [ai, philosophy, marketing]
+
+  # Tana node ids behind the vocabulary values, so /vn-catalog sync writes
+  # references ([[Name^id]]) instead of plain text. Maintained by
+  # /vn-catalog vocab — you don't need to fill this by hand.
+  tana_ids: {}       # e.g. {areas: {home-family: "hg6UQLfpqB4G"}}
 
   # Keyword -> tag map used by the sync script to seed frontmatter tags from
   # note titles. Left empty by default; add your own recurring vocabulary.

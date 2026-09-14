@@ -10,14 +10,15 @@ v1 and v2 lived inside Tana, where every command ran on one note at a time. v3 f
 
 ## What you get
 
-- **`/vn-sync`** — pull your voice memos out of Tana into a chronological markdown archive (`Voice-Notes/2026/2026-08-31-my-idea.md`), with frontmatter, idempotent re-runs, and a never-overwrite guarantee. **Every voice memo syncs by default** — any node with a recording attached, tagged or not; narrowing to a supertag is opt-in (`--source tagged`) — then enrich new arrivals (clean raw transcripts, fill missing summaries). Python script fast path, pure-MCP fallback.
+- **`/vn-sync`** — pull your voice memos out of Tana into a chronological markdown archive (`Voice-Notes/2026/2026-08-31-my-idea.md`), with frontmatter, idempotent re-runs, and a never-overwrite guarantee. **Every voice memo syncs by default** — any node with a recording attached, tagged or not; narrowing to a supertag is opt-in (`--source tagged`) — then enrich new arrivals (clean raw transcripts, fill missing summaries). `/vn-sync history` imports your **entire history**, years back, in every format, resumable, with a count and a cost warning before it starts. Super Folder fields (Area(s) / Project(s) / Topic(s), or your own) arrive in the frontmatter. Python script fast path, pure-MCP fallback.
 - **`/vn-process`** — the command router. Point it at one note, a day, a date range, a collection, or a theme; it suggests the best-fitting commands and runs them. **22 commands · 8 wisdom lenses** across five categories:
   - 🔍 **Understand** — Chat, Insight Crystallizer, Main Themes, Cognitive Bias Analyzer, Knowledge Gap Explorer
   - 🕸️ **Connect** — Connect, Time Evolution, Perspectives, and Lens Analysis with eight lenses: Metaphors, Scales, Mental Models, Consciousness, Hermetic, Zodiac, Four Agreements, Map of Consciousness
   - 🎯 **Act** — Plan, Task Extractor, Pros & Cons
   - 📝 **Create** — Structure Ideas, Journal Entry, Message, Story, Visual
   - 🚀 **Build** *(agent-native)* — Build Document, Build Feature, Article Pipeline, Weekly Digest, Project Brief
-- **`/vn-catalog`** — areas, projects, topics, people and tags in every note's frontmatter, plus dynamic **Collections** (markdown files of wikilinks — by area, project, topic, theme, or hand-picked) and a generated archive index. Optionally mirrors confirmed connections back to your Tana Super Folder fields — or leaves Tana as pure capture; your choice at setup.
+- **`/vn-catalog`** — areas, projects, topics, people and tags in every note's frontmatter, plus dynamic **Collections** (markdown files of wikilinks — by area, project, topic, theme, or hand-picked) and a generated archive index. `/vn-catalog vocab` pulls your own areas/projects/topics out of Tana so the catalog speaks your structure. Optionally mirrors confirmed connections back to your Tana Super Folder fields as references — or leaves Tana as pure capture; your choice at setup.
+- **`/vn-help`** — the manual, inside the agent. Ask how any step or concept works and it answers from [docs/help.md](docs/help.md) and links the matching [course video](docs/videos/README.md) with a timestamp.
 
 ## Two ways to use it
 
@@ -33,9 +34,9 @@ claude   # or open the folder in Claude Cowork
 ```
 
 1. Enable Tana's local API / MCP server and connect it to your harness → **[SETUP.md](SETUP.md)** (5 minutes).
-2. Run `/vn-sync setup` — pick your workspace and voice-note tag.
-3. Run `/vn-sync` — your notes appear in `Voice-Notes/`.
-4. Run `/vn-process latest` — and meet your Voice Note Agent.
+2. Run `/vn-sync setup` — pick your workspace (a supertag is optional: every voice memo syncs by default).
+3. Run `/vn-sync` — your notes appear in `Voice-Notes/`. Years of memos? `/vn-sync history` brings them all in.
+4. Run `/vn-process latest` — and meet your Voice Note Agent. Stuck anywhere: `/vn-help`.
 
 ## How it fits together
 
@@ -52,7 +53,7 @@ claude   # or open the folder in Claude Cowork
                               commands/ (22 commands · 8 lenses)
 ```
 
-Details: [docs/how-it-works.md](docs/how-it-works.md) · [docs/frontmatter-schema.md](docs/frontmatter-schema.md) · [docs/customization.md](docs/customization.md)
+Details: [docs/how-it-works.md](docs/how-it-works.md) · [docs/frontmatter-schema.md](docs/frontmatter-schema.md) · [docs/customization.md](docs/customization.md) · [docs/help.md](docs/help.md) · [course videos](docs/videos/README.md) · [CHANGELOG](CHANGELOG.md)
 
 ## Works with
 

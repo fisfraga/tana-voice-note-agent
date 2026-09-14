@@ -5,25 +5,30 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 1. CAPTURE (Tana)                                                       │
-│    You speak → Tana transcribes → voice memo node (audio + text)        │
-│    and Summary fields (the paid Tana template automates this)           │
+│    You speak → Tana transcribes → voice memo node (audio + text),       │
+│    Summary and Super Folder fields (the paid Tana template automates it) │
 └──────────────────────────────┬──────────────────────────────────────────┘
-                               │  /vn-sync
+                               │  /vn-sync   (or /vn-sync history: the whole
+                               │  past, paged in date windows, resumable)
                                │  scripts/sync_voice_notes.py talks to Tana's
                                │  local MCP server (http://127.0.0.1:8262/mcp):
-                               │  search_nodes(has: audio) → read_node
+                               │  search_nodes(has: audio | hasType) → read_node
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 2. ARCHIVE (local, canonical)                                           │
 │    Voice-Notes/2026/2026-08-31-my-idea.md — frontmatter + transcript    │
+│    Area(s)/Project(s)/Topic(s) from Tana → areas/projects/topics,       │
+│    with tana_tags + tana_refs (which values Tana already knows)         │
 │    enrichment on arrival: clean raw transcripts, fill missing summaries │
+│    (recent syncs only — a history import copies in, enrich later)       │
 │    sync-manifest.tsv remembers what's synced (idempotent, never         │
 │    overwrites, safe to re-run forever)                                  │
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │  /vn-catalog
                                │  areas/projects/topics/entities into
                                │  frontmatter, Collections/*.md (wikilink
-                               │  groups), INDEX.md
+                               │  groups), INDEX.md; `vocab` pulls your own
+                               │  area/project/topic nodes out of Tana
                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 3. PROCESS (the agent)                                                  │
@@ -33,8 +38,9 @@
 │    (processed: + outputs: back-links)                                   │
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │  optional write-back: outputs
-                               │  (import_tana_paste) and connections
-                               │  (set_field_content, tana.sync_connections)
+                               │  (import_tana_paste) and connections as
+                               │  references (set_field_content,
+                               │  tana.sync_connections)
                                ▼
                         Tana, if you still live there
 ```
@@ -55,7 +61,7 @@
 
 ## Commands vs. skills
 
-Three **skills** (how the agent operates: sync+enrich, route/process, catalog) and **22 commands · 8 lenses** (what can be done to notes — plain markdown prompt files). Skills are harness plumbing; commands are the product's soul, portable to any AI that can read a file. Routine per-note work (transcript cleanup, summaries, entity tagging, chat reports) lives inside the skills — commands are reserved for things worth *choosing*. Adding your own command or lens = adding one file (see `customization.md`).
+Four **skills** (how the agent operates: sync+enrich, route/process, catalog, help) and **22 commands · 8 lenses** (what can be done to notes — plain markdown prompt files). Skills are harness plumbing; commands are the product's soul, portable to any AI that can read a file. Routine per-note work (transcript cleanup, summaries, entity tagging, chat reports) lives inside the skills — commands are reserved for things worth *choosing*. Adding your own command or lens = adding one file (see `customization.md`).
 
 ## The v2 lineage
 

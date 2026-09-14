@@ -8,12 +8,16 @@ title: "A fresh start for the application"
 date: 2026-08-25            # Tana CAPTURE date (see caveat below)
 type: voice-note
 tags: [voice-note, cosmic-codex]     # free tags; seeded by catalog.tag_keywords
-areas: []                   # ← /vn-catalog fills these three
-projects: []                #   (mirrors the Tana template's Super Folder fields:
-topics: []                  #    Area(s) / Project(s) / Topic(s)+Contemplation(s))
+areas: [home-family]        # ← pre-filled from the node's Super Folder fields when Tana has them
+projects: []                #   (Area(s) / Project(s) / Topic(s), or whatever tana.category_fields maps);
+topics: [ai]                #   /vn-catalog fills the rest
 processed: []               # command names already run on this note (/vn-process appends)
 outputs: []                 # wikilinks to the outputs generated from this note, with a value gloss
 tana_id: nopW2YJqGtUp       # the source node — the bridge back to Tana
+tana_tags: [voice-note]     # the node's own supertags at sync time ([] for an untagged memo)
+tana_refs:                  # values that exist in Tana as references (only present when non-empty)
+  areas/home-family: hg6UQLfpqB4G
+  topics/ai: Kd8sLmQ1xAbc
 source: "Tana — My Workspace (Nd-xxxxxxxx)"
 ---
 
@@ -37,7 +41,9 @@ One paragraph per Tana child bullet, blank-line separated.
 - **`tana_id`** — never change it; it's how sync stays idempotent and how write-back finds the node.
 - **`processed`** — lets `/vn-process` avoid re-suggesting what already ran; clear it to make a note "fresh" again.
 - **`outputs`** — the note's memory of what came from it. Each entry is a wikilink plus a one-line value gloss, e.g. `"[[2026-08-31-insight-crystallizer-fresh-start]] — named the core insight"`. `/vn-process` appends it when saving an output; Obsidian's graph picks up the link.
-- **`areas`/`projects`/`topics`** — kebab-case values from your `vn-config.yaml` catalog vocabulary; `/vn-catalog` maintains them and the matching Collection files (people and contemplations land in `tags` as `person/...` / `contemplation/...`). With `tana.sync_connections: true`, confirmed values are mirrored to the note's Tana Super Folder fields.
+- **`areas`/`projects`/`topics`** — kebab-case values from your `vn-config.yaml` catalog vocabulary; `/vn-catalog` maintains them and the matching Collection files (people and contemplations land in `tags` as `person/...` / `contemplation/...`). With `tana.sync_connections: true`, confirmed values are mirrored to the note's Tana Super Folder fields as references. When the Tana node already carries those fields, `/vn-sync` pre-fills them: the display name is kebab-cased with any leading numbering dropped (`4. Home & Family` → `home-family`). Extra keys declared in `tana.category_fields` (e.g. `people: "Person(s)"`) appear as their own top-level lists.
+- **`tana_tags`** — the supertags the node carried when it was synced (kebab-case). Written by `/vn-sync`, read-only for everything else; `[]` means an untagged audio memo with no Super Folder fields to write back to.
+- **`tana_refs`** — provenance for categories. Each line is `<frontmatter key>/<kebab value>: <Tana node id>` and means "this value exists in Tana as a reference on this note". The catalog treats such values as confirmed (never removes or re-proposes them) and `/vn-catalog sync` uses the id to write a reference rather than text. Absent when nothing is linked. Written by `/vn-sync` on arrival and by `/vn-sync --refresh-categories` (the one sync path that edits existing files — frontmatter only), and appended by `/vn-catalog sync` after a successful write-back.
 
 ## Output files (`Voice-Notes/Outputs/`)
 

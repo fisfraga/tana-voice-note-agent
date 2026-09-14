@@ -31,11 +31,16 @@ export TANA_MCP_TOKEN="YOUR_TANA_API_TOKEN"   # add to your shell profile
 
 The token is only ever read from your harness config or that env var — never stored in this repo.
 
-## 4. Choose where notes live
+## 4. Create your config and choose where notes live
 
-Open `vn-config.yaml` — it's created for you from `vn-config.example.yaml` on the first
-run of the sync script, and it's **gitignored**, so your workspace id, archive path and
-catalog vocabulary never end up in a commit (only the example is tracked):
+Run setup once — it creates `vn-config.yaml` from `vn-config.example.yaml`, lists your workspaces, counts the voice memos in the one you pick, and asks what should sync:
+
+```
+/vn-sync setup                            # in your harness
+python3 scripts/sync_voice_notes.py --setup   # or in a terminal
+```
+
+`vn-config.yaml` is **gitignored**, so your workspace id, archive path and catalog vocabulary never end up in a commit (only the example is tracked). Then open it and decide:
 
 - Keep `archive.dir: "Voice-Notes"` to work inside this repo, **or**
 - Set an absolute path into your Second Brain, e.g. `archive.dir: "/Users/you/SecondBrain/Voice-Notes"`.
@@ -43,6 +48,7 @@ catalog vocabulary never end up in a commit (only the example is tracked):
 - Optionally seed `catalog.areas/projects/topics` with your own vocabulary — `/vn-catalog` will propose from these.
 - `archive.enrich` (default `true`) cleans raw transcripts and fills missing summaries right after each sync.
 - `tana.sync_connections` decides whether confirmed areas/projects/topics mirror back to your Tana Super Folder fields (`/vn-sync setup` asks; default `false` = Tana is capture-only).
+- `tana.category_fields` maps your Super Folder fields (`Area(s)` / `Project(s)` / `Topic(s)` in the template) to frontmatter — notes that already carry them in Tana arrive categorized. Add any other superfolder you use. With the template, pick **[3] both** at setup: the fields sit on the tagged note, and `both` syncs that note instead of only the recording underneath it.
 
 > **Your notes stay yours.** `Voice-Notes/` is gitignored — synced notes, generated outputs, collections, the index and the manifest are never committed, even though the default archive lives inside this repo. Only the folder scaffold (the READMEs) is tracked. If you point `archive.dir` somewhere else, that folder is outside git entirely. `vn-config.yaml` is gitignored too; `vn-config.example.yaml` is the tracked template.
 
@@ -51,19 +57,19 @@ catalog vocabulary never end up in a commit (only the example is tracked):
 In your harness, run:
 
 ```
-/vn-sync setup     # picks workspace + what to sync, writes them to vn-config.yaml
-/vn-sync --all     # first full sync (or plain /vn-sync for the last 30 days)
+/vn-sync            # the last 30 days
+/vn-sync history    # or: everything you ever recorded (shows a count and asks first)
 ```
 
 Or directly in a terminal:
 
 ```bash
-python3 scripts/sync_voice_notes.py --setup
-python3 scripts/sync_voice_notes.py --all --dry-run   # preview
-python3 scripts/sync_voice_notes.py --all
+python3 scripts/sync_voice_notes.py                       # last 30 days
+python3 scripts/sync_voice_notes.py --history --dry-run   # count the whole workspace
+python3 scripts/sync_voice_notes.py --history             # import it all (resumable)
 ```
 
-Then `/vn-catalog` to organize the new files, and `/vn-process` to start working with them.
+The history import copies notes in without the per-note AI cleanup — do that later in batches with `/vn-sync enrich --last 20`. Then `/vn-catalog vocab` to pull your areas/projects/topics from Tana, `/vn-catalog` to organize the new files, and `/vn-process` to start working with them. Lost? `/vn-help` explains every step and links the course videos.
 
 ## Per-harness notes
 
@@ -80,4 +86,6 @@ Then `/vn-catalog` to organize the new files, and `/vn-process` to start working
 - **Connection refused** — Tana desktop isn't running, or the local API is disabled.
 - **`no transcript` failures on sync** — the note hasn't been transcribed in Tana yet (open it in Tana; the template's automation fills the Transcript field). Re-run `/vn-sync` later; failed rows retry automatically.
 - **More notes than you expected** — the default syncs *every* voice memo in the workspace. To take only the ones carrying a supertag, re-run `/vn-sync setup` and choose option [2], or run one sync with `--source tagged --tag <id>`.
-- **Connection sync-back fails** — `tana.field_labels` must match your template's field names exactly (rename them in `vn-config.yaml` for non-English templates); delete `tana.field_ids` to force re-resolution. Sync-back needs Tana MCP in the session — the script alone can't do it.
+- **Connection sync-back fails** — `tana.category_fields` must name your template's Super Folder fields (`Area` / `Areas` / `Area(s)` all match; rename them in `vn-config.yaml` for non-English templates); delete `tana.field_ids` to force re-resolution. Sync-back needs Tana MCP in the session — the script alone can't do it.
+- **`search returned 1000`** — Tana caps a search at 1000 results. Use `/vn-sync history`, which pages through the whole workspace.
+- **Categories missing on old notes** — they were synced before Tana had the fields, or before this version. Run `python3 scripts/sync_voice_notes.py --refresh-categories --history --dry-run`, then without `--dry-run`.
