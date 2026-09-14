@@ -1,7 +1,7 @@
 ---
 name: vn-sync
-description: Sync voice notes from Tana into the local markdown archive — idempotent, config-driven, with enrichment (clean + summarize) and an MCP fallback when the script can't run.
-argument-hint: "[setup | --since N | --all | --source all_audio|tagged|both | --tag <id> | --dry-run | --no-enrich | status]"
+description: Sync voice notes from Tana into the local markdown archive — idempotent, config-driven, with a full-history import, enrichment (clean + summarize), Super Folder categories from Tana, and an MCP fallback when the script can't run.
+argument-hint: "[setup | history [--batch N] | enrich [--last N] | --since N | --source all_audio|tagged|both | --tag <id> [--tag <id>] | --dry-run | --no-enrich | --refresh-categories | status]"
 version: 3.0.0
 platforms: [macos, linux, windows]
 metadata:
@@ -33,8 +33,12 @@ Do **not** read the whole archive or the command library for a sync.
 | `tana.source` | Syncs | Needs a tag? |
 |---|---|---|
 | `all_audio` *(default)* | every node with audio attached | no |
-| `tagged` | only nodes carrying `tana.voice_note_tag_id` | yes |
+| `tagged` | only nodes carrying `tana.voice_note_tag_id` or any of `tana.extra_tag_ids` | yes |
 | `both` | the union of the two | yes |
+
+`tana.extra_tag_ids` lists legacy supertags that *also* mark voice notes (an old `#voice memo`, a `#conversation voice note`…). `--tag <id>` may be repeated on the command line to add tags for one run.
+
+**Categories come along for free.** When a node carries Super Folder fields (`Area(s)` / `Project(s)` / `Topic(s)` in the template, or whatever `tana.category_fields` maps), their values land in the note's `areas/projects/topics` frontmatter, with the Tana node ids kept in `tana_refs` and the node's own supertags in `tana_tags`. Untagged audio memos have no fields, so they arrive uncategorized — that is what `/vn-catalog` is for. **With the template the fields live on the tagged `#voice note`, and the recording `has: audio` finds is its child** — so `all_audio` alone never sees them. If the user has the tag and wants categories, use `both` (setup option 3, or `--source both --tag <id>` for one run); the sync prefers the tagged note and dedupes its audio twin.
 
 **Narrowing is opt-in and explicit.** If the user asks for a subset in their instruction — "only my #voice note ones", "just the tagged memos", "sync everything, tagged or not" — honour that for this run with `--source`/`--tag` and say which you used; do not silently rewrite `vn-config.yaml`. Offer to make it permanent only if they sound settled on it. If they name a tag you don't have an id for, `list_tags` on the workspace and match by name.
 
@@ -49,13 +53,34 @@ Do **not** read the whole archive or the command library for a sync.
 3. Fallback (no Python, or the user prefers chat): call the Tana MCP tools yourself — `list_workspaces`, then `search_nodes {"and":[{"has":"audio"}]}` on the chosen workspace to count its voice memos. Ask **what should sync** (see *What counts as a voice note* above). Only if they choose `tagged`/`both`, `list_tags` and show candidates whose name contains "voice". Edit `vn-config.yaml` yourself (`tana.workspace_id`, `tana.workspace_name`, `tana.source`, and `tana.voice_note_tag_id` only when a tag was chosen).
 4. Ask one more setup question: *"Should confirmed areas/projects/topics also sync back to your Tana Super Folder fields, or is Tana capture-only?"* — record the answer as `tana.sync_connections: true|false` (used by `/vn-catalog`).
 5. If neither Python nor Tana MCP is available, point the user to `SETUP.md` and stop.
+6. If the workspace count came back as `1000+` or the user mentions years of memos, suggest `/vn-sync history` for the first import.
 
 ### default — sync recent notes
 
-1. Fast path: `python3 scripts/sync_voice_notes.py --since 30` (pass through the user's `--since N`, `--all`, `--limit N`, `--dry-run`, and `--source`/`--tag` when they asked to narrow this run).
-2. Report the script's tally: written / skipped / failed. For each `failed` row, tell the user why (usually an empty Transcript field — the note may still be transcribing in Tana).
+1. Fast path: `python3 scripts/sync_voice_notes.py --since 30` (pass through the user's `--since N`, `--limit N`, `--dry-run`, and `--source`/`--tag` when they asked to narrow this run; `--tag` may repeat).
+2. Report the script's tally: written / skipped / failed. For each `failed` row, tell the user why (usually an empty Transcript field — the note may still be transcribing in Tana). If the script warns that the search hit the 1000-result cap, say so and offer `/vn-sync history`.
 3. **Enrich** the newly written notes (see below), unless `archive.enrich: false` or the user said `--no-enrich`.
-4. Suggest `/vn-catalog` to assign areas/projects/topics to the new notes.
+4. If some new notes arrived with `areas/projects/topics` already filled from Tana, say so — `/vn-catalog new` will only propose for the rest. Suggest `/vn-catalog` for the uncategorized ones.
+
+### `history` — bring in your whole archive (first run, or years of memos)
+
+A dedicated full sweep. Tana's search returns at most 1000 nodes per call, so the script walks the workspace backwards in date windows (90 days, halving automatically when a window saturates), records every node in the manifest as it goes, and is safe to interrupt and resume. **It copies notes in; it does not enrich them** — enrichment is one AI pass per note and would turn a ten-minute import into hours of tokens. Clean up later, in batches (see `enrich`).
+
+1. Pre-flight: `python3 scripts/sync_voice_notes.py --history` (add `--source both --tag <id>` for each legacy tag the user names; `--dry-run` if they only want the numbers). Outside a terminal the script stops after discovery and prints the pre-flight instead of prompting.
+2. Relay the pre-flight to the user **verbatim** — nodes found, windows walked, how many will be fetched, the tag breakdown, the time estimate — and add: *"This copies the notes in. Cleaning transcripts and writing missing summaries is one AI pass per note, so I will not do that now; afterwards you can say 'enrich the last 20' whenever you like."* Ask for an explicit go.
+3. Run `python3 scripts/sync_voice_notes.py --history --yes` (add `--batch 300` if the user prefers chunks — re-run the same command to continue; the manifest is saved every 25 notes and on Ctrl-C).
+4. Report the tally: written / exists / empty / failed. `empty` rows are nodes with no transcript at the time of the sweep (`--retry-empty` re-tries them later); `failed` rows retry on the next run.
+5. **Do not enrich.** Suggest, in this order: `/vn-catalog vocab` (pull the user's own areas/projects/topics from Tana), `/vn-catalog new`, then `/vn-sync enrich --last 20` for the freshest notes.
+
+`--all` is accepted as a synonym of `history`. `--window N` sets the initial window in days (default `tana.history.window_days`, 90).
+
+### `enrich [--last N | <note names>]` — clean + summarize on demand
+
+Runs the enrichment below on notes the user names, or on the N newest `done` rows in the manifest (`--last 20` default). Never more than 20 notes per batch; report, then ask before the next batch. This is how a history import gets cleaned up over time.
+
+### `--refresh-categories` — re-read Super Folder fields for archived notes
+
+`python3 scripts/sync_voice_notes.py --refresh-categories --since 60` (or `--history` for the whole archive) re-reads each archived note's Tana node and **union-merges** any Area/Project/Topic values into its frontmatter — frontmatter only, body untouched, nothing ever removed. Run `--dry-run` first and show the user what would change. Useful after they organize old notes in Tana.
 
 ### Enrichment — clean + summarize new arrivals
 
@@ -65,31 +90,37 @@ Runs only on notes written *in this sync* (never on the existing archive). This 
 2. **Summarize, if missing.** If the note has no `## Summary` (Tana's summary field usually provides one), generate it: a bulleted list, each bullet a **short bold title** followed by an expanded description on the same line; first person, as if the note's author wrote it; the note's own language; cover ALL the important parts — do not omit for brevity.
 3. Report which notes were cleaned and which were summarized.
 
-On request, enrichment can also run standalone on notes the user names ("enrich my last three notes").
+On request, enrichment can also run standalone on notes the user names ("enrich my last three notes") — that is the `enrich` mode above. **Never enrich as part of `history`.**
 
 ### MCP fallback — when the script can't run
 
 Only if Python is unavailable or the script errors on transport. Replicate its algorithm with Tana MCP tools, sequentially:
 
-1. `search_nodes` with the query for the configured `tana.source` (drop the `created` clause for `--all`):
-   - `all_audio` (default) — `{ "and": [ { "has": "audio" }, { "created": { "last": N } } ] }`
-   - `tagged` — `{ "and": [ { "hasType": "<voice_note_tag_id>" }, { "created": { "last": N } } ] }`
-   - `both` — `{ "and": [ { "or": [ { "has": "audio" }, { "hasType": "<voice_note_tag_id>" } ] }, { "created": { "last": N } } ] }`
-2. Load `<archive>/sync-manifest.tsv`; skip node ids already `done`/`exists`/`skip`.
-3. For each remaining node: `read_node` (maxDepth 6); extract the title (strip trailing `#tags`, unwrap `![alt](url)` names, strip checkbox prefixes and trailing timestamps) and the children of the `**Transcript**:` and `**Transcript Summary (AI)**:` fields (labels per `vn-config.yaml`). If there's no Transcript field, the direct child bullets are the transcript; if there are none and the title is very long, the title IS the content. When the name is Tana's generic capture label ("Voice memo captured Mon, Feb 9, 12:17"), title the note from the first ~70 characters of the transcript instead — otherwise every captured memo lands on the same filename stem.
-4. Write the file per the schema in `docs/frontmatter-schema.md`, at the path dictated by `archive.dir` + `archive.layout` + `archive.filename`. **Never overwrite an existing file** — mark the row `exists` instead.
-5. Append/update the manifest row (`date · node_id · mirrored · title`), run enrichment on the new files, and report the same tally the script would.
+1. `search_nodes` (`limit: 1000`, `workspaceIds: [<workspace_id>]`) with the clause for the configured `tana.source`:
+   - `all_audio` (default) — `{ "has": "audio" }`
+   - `tagged` — `{ "hasType": "<id>" }`, or `{ "or": [ { "hasType": "<id1>" }, { "hasType": "<id2>" } ] }` with `extra_tag_ids`
+   - `both` — `{ "or": [ { "has": "audio" }, { "hasType": "<id>" }, … ] }`
+
+   Recent sync: `{ "and": [ <clause>, { "created": { "last": N } } ] }`.
+   **History sweep** (no cursor exists, so page by date windows): start `LO = 0`, `HI = 90`. Before each window run `{ "and": [ <clause>, { "not": { "created": { "last": LO } } } ] }` — if it returns fewer than 1000 nodes, that result is the tail and you are done. Otherwise fetch the window `{ "and": [ <clause>, { "created": { "last": HI } }, { "not": { "created": { "last": LO } } } ] }`; if it returns 1000, halve the window and retry; then `LO = HI`, `HI = LO + window`. Register every discovered node in the manifest as `pending` before reading any of them.
+
+   **Cost warning — say this before a history sweep in fallback mode:** every `read_node` lands in the conversation (roughly 1–3k tokens each). Above ~50 notes, installing Python is the difference between minutes and a very long, expensive session. If the user still wants it: work in batches of 20 `read_node` calls, newest window first, update the manifest after each batch, stop and ask before the next one, and never enrich during the sweep.
+2. Load `<archive>/sync-manifest.tsv`; skip node ids already `done`/`exists`/`skip` (and `empty`, unless the user asked to retry them). Prefer the tagged node over its untagged audio child when both show up for the same recording — the tagged one carries the fields.
+3. For each remaining node: `read_node` (maxDepth 6); extract the title (strip trailing `#tags`, unwrap `![alt](url)` names, strip checkbox prefixes and trailing timestamps) and the children of the `**Transcript**:` and `**Transcript Summary (AI)**:` fields (labels per `vn-config.yaml`). If there's no Transcript field, the direct child bullets are the transcript; if there are none and the title is very long, the title IS the content. When the name is Tana's generic capture label ("Voice memo captured Mon, Feb 9, 12:17"), title the note from the first ~70 characters of the transcript instead — otherwise every captured memo lands on the same filename stem. Also collect every other `**Label**:` field whose label matches a `tana.category_fields` entry (match loosely: `Area`, `Areas`, `Area(s)` are the same): each `[Display Name #tag](tana:<id>)` value becomes a kebab-case entry in that frontmatter key (drop leading numbering — `4. Home & Family` → `home-family`) plus a `tana_refs` line `areas/home-family: <id>`. The search result's `tags[].name` become `tana_tags`.
+4. Write the file per the schema in `docs/frontmatter-schema.md`, at the path dictated by `archive.dir` + `archive.layout` + `archive.filename`. **Never overwrite an existing file** — mark the row `exists` instead. A node with no transcript is `empty` in a history sweep, `failed` otherwise.
+5. Append/update the manifest row (`date · node_id · mirrored · title · synced_at`), run enrichment on the new files (recent sync only — never in a sweep), and report the same tally the script would.
 
 ### `status` — where things stand
 
-Count manifest rows by `mirrored` value, report the newest synced note's date, and how many files the archive holds (`ls` by year folder). No Tana calls.
+Count manifest rows by `mirrored` value (including `empty` and `pending`), report the newest and the oldest synced note dates (how far back the archive reaches), and how many files the archive holds (`ls` by year folder). No Tana calls. If rows are still `pending`, say a history sweep was interrupted and can be resumed with the same command.
 
 ## Rules
 
 - **Never commit or print the Tana token.** It lives in the harness MCP config or `TANA_MCP_TOKEN` — nowhere else.
 - **Synced notes are private.** The archive is gitignored when it sits inside the repo; never `git add -f` a note, an output, or the manifest, and never paste note content into a commit message or a PR. Captured memos carry a signed audio URL in the Tana node — it must not reach the archive or the terminal.
 - Never overwrite an existing note file — hand-curated edits are sacred. Enrichment touches only notes written in the current sync (or explicitly named by the user).
-- Never delete manifest rows; `skip` (hand-set) means never sync that node.
+- Never delete manifest rows; `skip` (hand-set) means never sync that node. `empty` rows are history-sweep leftovers with no transcript — `--retry-empty` re-tries them; never turn them into `skip` yourself.
+- A history sweep never enriches. Enrichment is on demand, in batches of at most 20, always with the user's go.
 - Transcription happens in Tana (the audio lives there). A note failing with "no transcript" is usually still processing — retry on the next sync.
 - Everything here is safe to re-run; say so when the user hesitates.
 - End with one concrete next step (usually `/vn-catalog` for new files).
