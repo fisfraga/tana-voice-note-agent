@@ -62,8 +62,9 @@ MANIFEST_HEADER = [
     "# Voice Note Agent sync manifest — maintained by scripts/sync_voice_notes.py",
     "# mirrored: done (synced) | exists (file already on disk, untouched) | failed (retried next run) | "
     "empty (no transcript at fetch — history mode; --retry-empty re-tries) | skip (hand-set: never sync)",
-    "date\tnode_id\tmirrored\ttitle\tsynced_at",
+    "date\tnode_id\tmirrored\ttitle\tsynced_at\tmemo_id",
 ]
+ANCHOR_TOLERANCE = 2.0                # seconds between a memo node and its day-node bullet
 DEFAULT_CATEGORY_FIELDS = {"areas": "Area(s)", "projects": "Project(s)", "topics": "Topic(s)"}
 CORE_CATEGORY_KEYS = ("areas", "projects", "topics")
 FLUSH_EVERY = 25                      # fetches between manifest saves
@@ -519,10 +520,12 @@ def yaml_list(values):
     return "[%s]" % ", ".join(values)
 
 
-def frontmatter_lines(title, date, tags, cats, tana_id, tana_tags, tana_refs, source):
+def frontmatter_lines(title, date, tags, cats, tana_id, tana_tags, tana_refs, source, tana_memo_id=None):
     """The frontmatter block of a note (list of lines, including the --- fences).
     cats is an ordered {fm_key: [values]} — areas/projects/topics first, then
-    any extra keys declared in tana.category_fields."""
+    any extra keys declared in tana.category_fields. tana_id is the day-node
+    bullet (the node the user sees and every write-back targets); tana_memo_id
+    is the hidden audio memo behind it, when one was resolved."""
     fm = [
         "---",
         'title: "%s"' % title.replace('"', "'"),
@@ -539,8 +542,10 @@ def frontmatter_lines(title, date, tags, cats, tana_id, tana_tags, tana_refs, so
         "processed: []",
         "outputs: []",
         f"tana_id: {tana_id}",
-        "tana_tags: " + yaml_list(tana_tags),
     ]
+    if tana_memo_id:
+        fm.append(f"tana_memo_id: {tana_memo_id}")
+    fm.append("tana_tags: " + yaml_list(tana_tags))
     if tana_refs:
         fm.append("tana_refs:")
         for k, v in tana_refs.items():
@@ -549,8 +554,9 @@ def frontmatter_lines(title, date, tags, cats, tana_id, tana_tags, tana_refs, so
     return fm
 
 
-def build_note(title, date, tags, cats, tana_id, tana_tags, tana_refs, source, transcript, summary):
-    fm = frontmatter_lines(title, date, tags, cats, tana_id, tana_tags, tana_refs, source)
+def build_note(title, date, tags, cats, tana_id, tana_tags, tana_refs, source, transcript, summary,
+               tana_memo_id=None):
+    fm = frontmatter_lines(title, date, tags, cats, tana_id, tana_tags, tana_refs, source, tana_memo_id)
     fm += ["", f"# {title}", "",
            f"> Voice note recorded {date}. Mirrored from Tana node `{tana_id}`.", "",
            "## Transcript", ""]
@@ -625,8 +631,14 @@ def edit_frontmatter(text, updates):
         if span:
             fm[span[0]:span[1]] = new_lines
         elif new_lines:
-            # insert before `source:` (the conventional last key), else at the end
-            idx = next((i for i, l in enumerate(fm) if l.startswith("source:")), len(fm))
+            if key == "tana_memo_id":
+                # right after tana_id, where build_note puts it
+                idx = next((i + 1 for i, l in enumerate(fm) if l.startswith("tana_id:")), None)
+            else:
+                idx = None
+            if idx is None:
+                # insert before `source:` (the conventional last key), else at the end
+                idx = next((i for i, l in enumerate(fm) if l.startswith("source:")), len(fm))
             fm[idx:idx] = new_lines
     return "---\n" + "\n".join(fm) + "\n---" + body
 
@@ -674,9 +686,15 @@ def load_manifest(path):
         if len(p) < 4:
             continue
         rows[p[1]] = {"date": p[0], "node_id": p[1], "mirrored": p[2], "title": p[3],
-                      "synced_at": p[4] if len(p) > 4 else ""}
+                      "synced_at": p[4] if len(p) > 4 else "",
+                      "memo_id": p[5] if len(p) > 5 else ""}
         order.append(p[1])
     return rows, order
+
+
+def memo_index(rows):
+    """memo node id -> manifest row id (the day-node bullet) for rows that carry one."""
+    return {r["memo_id"]: nid for nid, r in rows.items() if r.get("memo_id")}
 
 
 def write_manifest(path, rows, order):
@@ -684,7 +702,7 @@ def write_manifest(path, rows, order):
     for nid in order:
         r = rows[nid]
         lines.append("\t".join([r["date"], r["node_id"], r["mirrored"], r["title"],
-                                r.get("synced_at", "") or ""]))
+                                r.get("synced_at", "") or "", r.get("memo_id", "") or ""]))
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text("\n".join(lines) + "\n")
     os.replace(tmp, path)
@@ -816,11 +834,10 @@ def run_setup(mcp, cfg):
                           "supertag)? [y/N]: ").strip().lower() in ("y", "yes"))
     if has_template:
         print("\nWhat should sync pull in?")
-        print("  [1] every voice memo (audio only — the #voice note fields are not read)")
+        print("  [1] every voice memo (anchored on its day-node bullet, so Area/Project/Topic fields come along)")
         print("  [2] only notes carrying the #voice note supertag")
-        print("  [3] both — every voice memo plus every #voice note      (recommended:")
-        print("      your Area/Project/Topic fields live on the tagged note, and [3]")
-        print("      brings them into the archive)")
+        print("  [3] both — every voice memo plus every #voice note (recommended: also catches")
+        print("      tagged notes whose audio was removed)")
         choice = input("Choose [3]: ").strip() or "3"
         source = {"1": "all_audio", "2": "tagged", "3": "both"}.get(choice, "both")
     else:
@@ -855,8 +872,6 @@ def run_setup(mcp, cfg):
           f"syncing {describe_source(source, tag_name)}.")
     if source == "all_audio":
         print("Change your mind later with --source tagged --tag <id>, or edit tana.source.")
-        print("Note: Super Folder fields (Area/Project/Topic) sit on the tagged note, not on "
-              "the audio memo — choose [3] both if you want them in the archive.")
     if tag:
         print("Older notes under other supertags? Add their ids to tana.extra_tag_ids in "
               f"{CONFIG_PATH.name} (inline list), then run --history.")
@@ -866,6 +881,7 @@ def run_setup(mcp, cfg):
 # ------------------------------------------------------------------- main ---
 
 TANA_ID_RE = re.compile(r"^tana_id:\s*[\"']?([A-Za-z0-9_-]+)", re.M)
+TANA_MEMO_ID_RE = re.compile(r"^tana_memo_id:\s*[\"']?([A-Za-z0-9_-]+)", re.M)
 DATE_RE = re.compile(r"^date:\s*[\"']?(\d{4}-\d{2}-\d{2})", re.M)
 
 
@@ -914,6 +930,9 @@ def index_by_tana_id(archive):
         m = TANA_ID_RE.search(text[:4000])
         if m:
             index.setdefault(m.group(1), f)
+        m = TANA_MEMO_ID_RE.search(text[:4000])
+        if m:
+            index.setdefault(m.group(1), f)
         fp = fingerprint(transcript_of(text))
         if fp:
             prints.setdefault(fp, f)
@@ -935,27 +954,209 @@ def hit_date(hit):
     return str(created or "")[:10] or dt.date.today().isoformat()
 
 
-def add_hits(rows, order, hits):
+def parse_created(created):
+    """Tana `created` (ISO string or epoch ms) -> epoch seconds, or None."""
+    if isinstance(created, (int, float)):
+        return created / 1000.0
+    s = str(created or "").strip()
+    if not s:
+        return None
+    if s.endswith("Z"):
+        s = s[:-1] + "+00:00"
+    try:
+        return dt.datetime.fromisoformat(s).timestamp()
+    except ValueError:
+        return None
+
+
+def neighbour_dates(date):
+    """(date, the day before, the day after) — the Day node lives in the user's
+    local day, `created` is UTC; a late-evening capture lands one day off."""
+    try:
+        d = dt.date.fromisoformat(date)
+    except ValueError:
+        return [date]
+    return [date, (d - dt.timedelta(days=1)).isoformat(), (d + dt.timedelta(days=1)).isoformat()]
+
+
+def find_anchor(hit, children_fn, tolerance=ANCHOR_TOLERANCE):
+    """The day-node bullet behind a captured memo.
+
+    A Tana voice capture creates two nodes: the bullet the user sees under the
+    Day node (natural-language title) and a hidden "Voice memo captured …" node
+    that carries the audio. `has: audio` only ever finds the hidden one, and the
+    MCP surface does not link them. They are created within milliseconds, so the
+    bullet is the Day-node child whose `created` is closest to the memo's (within
+    `tolerance` seconds); failing that, the child whose name equals the memo's
+    breadcrumb tail. children_fn(date) -> that Day node's children (dicts with
+    id/name/created/tags). Returns the child dict, or None.
+    """
+    t = parse_created(hit.get("created"))
+    dates = neighbour_dates(hit_date(hit))
+    if t is not None:
+        best = None
+        for d in dates:
+            for k in children_fn(d):
+                if not (k.get("name") or "").strip():
+                    continue                      # empty clutter bullets
+                kt = parse_created(k.get("created"))
+                if kt is None:
+                    continue
+                diff = abs(kt - t)
+                if diff <= tolerance and (best is None or diff < best[0]):
+                    best = (diff, k)
+            if best is not None:
+                return best[1]                    # closest within the first day that has one
+    crumb = hit.get("breadcrumb") or []
+    want = str(crumb[-1]).strip() if crumb else ""
+    if want:
+        for d in dates:
+            for k in children_fn(d):
+                if (k.get("name") or "").strip() == want:
+                    return k
+    return None
+
+
+class DayIndex:
+    """Cached Day-node children per date, fetched through the MCP server."""
+
+    def __init__(self, mcp, workspace_id):
+        self.mcp, self.workspace_id, self.cache = mcp, workspace_id, {}
+
+    @property
+    def lookups(self):
+        return len(self.cache)
+
+    def children(self, date):
+        if date in self.cache:
+            return self.cache[date]
+        kids = []
+        args = {"workspaceId": self.workspace_id, "granularity": "day", "date": date}
+        r = self.mcp.call_json("get_or_create_calendar_node", args)
+        day_id = r.get("nodeId") if isinstance(r, dict) else None
+        offset = 0
+        while day_id:
+            c = self.mcp.call_json("get_children", {"nodeId": day_id, "limit": 1000, "offset": offset})
+            batch = c.get("children", []) if isinstance(c, dict) else (c if isinstance(c, list) else [])
+            kids.extend(k for k in batch if isinstance(k, dict))
+            if not (isinstance(c, dict) and c.get("hasMore") and batch):
+                break
+            offset += len(batch)
+        self.cache[date] = kids
+        return kids
+
+    def resolve(self, hit):
+        found = find_anchor(hit, self.children)
+        if found is not None:
+            return found
+        return self.resolve_nested(hit)
+
+    def resolve_nested(self, hit, tolerance=ANCHOR_TOLERANCE):
+        """Bullets nested deeper than the Day node's first level (a capture made
+        inside another bullet) are not Day-node children. The memo's breadcrumb
+        tail is that bullet's name: search it by text and keep the hit created
+        within `tolerance` seconds of the memo."""
+        crumb = hit.get("breadcrumb") or []
+        want = str(crumb[-1]).strip() if crumb else ""
+        t = parse_created(hit.get("created"))
+        if not want or t is None:
+            return None
+        days_ago = max(1, int((dt.datetime.now(dt.timezone.utc).timestamp() - t) // 86400) + 2)
+        query = {"and": [{"textContains": want[:200]}, {"created": {"last": days_ago}}]}
+        try:
+            hits = search(self.mcp, query, self.workspace_id, limit=50)
+        except Exception:
+            return None
+        best = None
+        for k in hits:
+            if k.get("id") == hit.get("id") or not (k.get("name") or "").strip():
+                continue
+            kt = parse_created(k.get("created"))
+            if kt is None:
+                continue
+            diff = abs(kt - t)
+            if diff <= tolerance and (best is None or diff < best[0]):
+                best = (diff, k)
+        return best[1] if best else None
+
+
+def needs_anchor(hit):
+    """Untagged hits and anything named like a capture are (or may be) the hidden
+    memo node; tagged hits are day-node bullets already."""
+    return bool(CAPTURE_RE.match((hit.get("name") or "").strip())) or not tag_names(hit)
+
+
+def add_hits(rows, order, hits, resolver=None, relink=False):
     """Register search hits as manifest rows. Returns the number of new rows.
     Rows already settled (done/exists/skip/empty) are left alone; unsettled ones
-    get their breadcrumb/tags refreshed so a resumed run still has them."""
+    get their breadcrumb/tags refreshed so a resumed run still has them.
+
+    With a resolver (hit -> day-node bullet dict or None), a hidden memo hit is
+    registered under its BULLET's id — that is the canonical tana_id — with the
+    memo id kept in the row (`memo_id`, manifest column 6) so the memo is never
+    registered twice. row["anchor"] is "bullet" (resolved), "self" (the hit is
+    the bullet) or "memo" (no bullet found: the memo id stays the anchor)."""
     new = 0
+    memos = memo_index(rows)
     for n in hits:
         nid = n.get("id")
         if not nid:
             continue
+        if nid in memos:
+            continue                              # its bullet is already a row
         if nid in rows:
             if rows[nid]["mirrored"] in ("pending", "failed"):
                 rows[nid]["breadcrumb"] = n.get("breadcrumb") or []
-                rows[nid]["tags"] = tag_names(n)
+                if not rows[nid].get("memo_id"):
+                    rows[nid]["tags"] = tag_names(n)
+                continue
+            if not (relink and resolver is not None and not rows[nid].get("memo_id") and needs_anchor(n)):
+                continue
+            # relink: an old row keyed on the hidden memo node — register its bullet
+            bullet = resolver(n)
+            if bullet is None or not bullet.get("id") or bullet["id"] == nid:
+                rows[nid]["anchor"] = "memo"
+                continue
+            key = bullet["id"]
+            memos[nid] = key
+            if key in rows:
+                rows[key]["memo_id"] = nid
+                rows[key]["anchor"] = "bullet"
+                continue
+            rows[key] = {"date": rows[nid]["date"], "node_id": key, "mirrored": "pending",
+                         "title": (bullet.get("name") or rows[nid]["title"]).replace("\t", " ").strip()[:160],
+                         "breadcrumb": n.get("breadcrumb") or [], "tags": tag_names(bullet),
+                         "synced_at": "", "memo_id": nid, "anchor": "bullet"}
+            order.append(key)
+            new += 1
             continue
-        rows[nid] = {"date": hit_date(n), "node_id": nid, "mirrored": "pending",
-                     "title": (n.get("name") or "").replace("\t", " ")[:160],
-                     "breadcrumb": n.get("breadcrumb") or [], "tags": tag_names(n),
-                     "synced_at": ""}
-        order.append(nid)
+        key, title, tags, anchor, memo_id = nid, n.get("name") or "", tag_names(n), "self", ""
+        if resolver is not None and needs_anchor(n):
+            bullet = resolver(n)
+            if bullet is None:
+                anchor = "memo"
+            elif bullet.get("id") and bullet["id"] != nid:
+                key, anchor, memo_id = bullet["id"], "bullet", nid
+                title, tags = bullet.get("name") or title, tag_names(bullet)
+                memos[nid] = key
+                if key in rows:                   # bullet already discovered (e.g. tagged hit)
+                    rows[key]["memo_id"] = nid
+                    if rows[key]["mirrored"] in ("pending", "failed"):
+                        rows[key]["tags"] = tags or rows[key].get("tags") or []
+                    continue
+        rows[key] = {"date": hit_date(n), "node_id": key, "mirrored": "pending",
+                     "title": title.replace("\t", " ").strip()[:160],
+                     "breadcrumb": n.get("breadcrumb") or [], "tags": tags,
+                     "synced_at": "", "memo_id": memo_id, "anchor": anchor}
+        order.append(key)
         new += 1
     return new
+
+
+def anchor_counts(rows, order):
+    anchored = sum(1 for nid in order if rows[nid].get("anchor") == "bullet")
+    unanchored = sum(1 for nid in order if rows[nid].get("anchor") == "memo")
+    return anchored, unanchored
 
 
 def sort_order(order, rows):
@@ -964,7 +1165,7 @@ def sort_order(order, rows):
     order.sort(key=lambda nid: (rows[nid]["date"], 0 if rows[nid].get("tags") else 1))
 
 
-def preflight(rows, order, todo_states, windows, batch):
+def preflight(rows, order, todo_states, windows, batch, day_lookups=0):
     todo = [nid for nid in order if rows[nid]["mirrored"] in todo_states]
     settled = len(order) - len(todo)
     breakdown = {}
@@ -978,8 +1179,12 @@ def preflight(rows, order, todo_states, windows, batch):
           f"{len(todo):,} to fetch · {settled:,} already in manifest")
     if parts:
         print(f"tags: {parts}")
+    anchored, unanchored = anchor_counts(rows, order)
     print(f"cost: ~{len(todo):,} read_node calls (≈{minutes[0]}–{minutes[1]} min"
-          + (f", {batch} per run with --batch" if batch else "") + ").")
+          + (f", {batch} per run with --batch" if batch else "") + ")"
+          + f" + 1 calendar and 1 children call per day with captures ({day_lookups} day(s), done).")
+    print(f"anchors: {anchored} memo(s) anchored to their day-node bullet · "
+          f"{unanchored} kept on the memo node (no bullet found)")
     print("      Enrichment is NOT run in history mode — run /vn-sync enrich in batches\n"
           "      afterwards (one AI pass per note).")
     return todo
@@ -999,6 +1204,9 @@ def main():
     ap.add_argument("--retry-empty", action="store_true", help="re-fetch nodes marked empty (no transcript last time)")
     ap.add_argument("--refresh-categories", action="store_true",
                     help="re-read Super Folder fields of already-archived notes into their frontmatter (frontmatter-only edits)")
+    ap.add_argument("--relink", action="store_true",
+                    help="re-anchor archived notes whose tana_id is the hidden audio memo onto the day-node "
+                         "bullet the user sees (frontmatter-only edits; combine with --since N or --history)")
     ap.add_argument("--limit", type=int, default=0, help="stop after writing N files")
     ap.add_argument("--dry-run", action="store_true", help="report, but write nothing")
     ap.add_argument("--source", choices=SOURCE_MODES, default=None,
@@ -1036,6 +1244,7 @@ def main():
     id_index, fp_index = index_by_tana_id(archive)
     rows, order = load_manifest(manifest_path)
     today = dt.date.today().isoformat()
+    days = DayIndex(mcp, workspace_id)
 
     def flush():
         if not a.dry_run and order:
@@ -1044,8 +1253,13 @@ def main():
     # -- refresh categories (frontmatter-only edits of archived notes) -------
     if a.refresh_categories:
         cutoff = None if a.history else (dt.date.today() - dt.timedelta(days=a.since)).isoformat()
-        candidates = []
+        candidates, seen = [], set()
         for nid, path in sorted(id_index.items(), key=lambda kv: kv[1].name, reverse=True):
+            if path in seen:
+                continue                          # id_index also maps tana_memo_id -> the same file
+            seen.add(path)
+            m = TANA_ID_RE.search(path.read_text(errors="replace")[:4000])
+            nid = m.group(1) if m else nid        # always read from the bullet (tana_id)
             date = rows.get(nid, {}).get("date")
             if not date:
                 m = DATE_RE.search(path.read_text(errors="replace")[:4000])
@@ -1089,7 +1303,7 @@ def main():
         print(f"history: walking {describe_source(source_mode)} in {window}-day windows")
         for lo, hi, hits, saturated in walk_windows(lambda q: search(mcp, q, workspace_id), clause, window):
             windows += 1
-            new = add_hits(rows, order, hits)
+            new = add_hits(rows, order, hits, days.resolve, relink=a.relink)
             label = f"older than {lo}d" if hi is None else f"{lo}–{hi}d ago"
             print(f"  window {label}: {len(hits)} node(s), {new} new"
                   + ("  ! SATURATED: 1000+ nodes in one day — some may be missing" if saturated else ""))
@@ -1100,15 +1314,69 @@ def main():
         if len(found) >= SEARCH_CAP:
             print(f"  ! search returned {SEARCH_CAP} (the server cap) — notes in this window may be "
                   "missing; use --history or a smaller --since", file=sys.stderr)
-        add_hits(rows, order, found)
+        add_hits(rows, order, found, days.resolve, relink=a.relink)
+        anchored, unanchored = anchor_counts(rows, order)
+        if anchored or unanchored:
+            print(f"  anchored {anchored} memo(s) to their day-node bullet"
+                  + (f"; {unanchored} kept on the memo node (no bullet found)" if unanchored else "")
+                  + f" — {days.lookups} day node(s) read")
     sort_order(order, rows)
 
     settled = {"done", "exists", "skip"} | (set() if a.retry_empty else {"empty"})
     todo_states = {"pending", "failed"} | ({"empty"} if a.retry_empty else set())
 
+    # -- relink: move archived notes from the hidden memo node to the bullet ---
+    if a.relink:
+        candidates = [(nid, r["memo_id"]) for nid in order for r in [rows[nid]]
+                      if r.get("anchor") == "bullet" and r.get("memo_id") in id_index
+                      and TANA_MEMO_ID_RE.search(id_index[r["memo_id"]].read_text(errors="replace")[:4000]) is None]
+        stale = [nid for nid, r in rows.items() if r.get("mirrored") in ("done", "exists")
+                 and not r.get("memo_id") and CAPTURE_RE.match(r.get("title") or "")
+                 and nid not in {m for _, m in candidates}]
+        print(f"relink: {len(candidates)} archived note(s) anchored on a memo node"
+              + (" — dry run" if a.dry_run else ""))
+        if stale:
+            print(f"  {len(stale)} other memo-anchored row(s) are outside this range — "
+                  "re-run with --history (or a larger --since) to relink them too")
+        changed = fetched = 0
+        for bullet_id, memo_id in candidates:
+            if batch and fetched >= batch:
+                print(f"  batch limit reached ({batch}); re-run to continue")
+                break
+            path = id_index[memo_id]
+            try:
+                md = mcp.call("read_node", {"nodeId": bullet_id, "maxDepth": 6})
+                fetched += 1
+                _, _, _, fields = parse(md, t_label, s_label)
+                cats, refs = categories_from_fields(fields, cat_map)
+                tags = rows[bullet_id].get("tags") or []
+                text = path.read_text()
+                text2 = edit_frontmatter(text, {"tana_id": bullet_id, "tana_memo_id": memo_id})
+                text2, changes = merge_categories(text2, cats, refs, tags)
+                changes = ["tana_id memo→bullet"] + changes
+                print(f"  ~ {path.relative_to(archive)} ({'; '.join(changes)})")
+                changed += 1
+                if not a.dry_run:
+                    path.write_text(text2)
+                    id_index[bullet_id] = path
+                    # the memo's own row (old archives keyed on it) is superseded
+                    old = rows.pop(memo_id, None)
+                    if old is not None:
+                        order[:] = [x for x in order if x != memo_id]
+                        rows[bullet_id]["synced_at"] = old.get("synced_at") or today
+                    rows[bullet_id]["mirrored"] = "exists"
+                    rows[bullet_id]["synced_at"] = rows[bullet_id].get("synced_at") or today
+                    if fetched % FLUSH_EVERY == 0:
+                        flush()
+            except Exception as e:
+                print(f"  ✗ {bullet_id}: {e}", file=sys.stderr)
+        flush()
+        print(f"\nrelinked={changed} checked={fetched}" + (" (dry run — nothing written)" if a.dry_run else ""))
+        return
+
     # -- pre-flight gate (history only) --------------------------------------
     if a.history:
-        todo = preflight(rows, order, todo_states, windows, batch)
+        todo = preflight(rows, order, todo_states, windows, batch, days.lookups)
         if not todo:
             print("\nnothing to fetch — the archive already holds every node found.")
             return
@@ -1164,7 +1432,8 @@ def main():
                 slug_src = re.sub(r"\s*\(.*?\)\s*$", "", title).strip() or title
                 outdir = note_dir(archive, layout, r["date"])
                 path = outdir / fname_pattern.format(date=r["date"], slug=slugify(slug_src))
-                twin = id_index.get(nid) or fp_index.get(fingerprint("\n".join(transcript)))
+                twin = (id_index.get(nid) or (id_index.get(r["memo_id"]) if r.get("memo_id") else None)
+                        or fp_index.get(fingerprint("\n".join(transcript))))
                 if twin is None and path.exists():
                     twin = path
                 if twin is not None:
@@ -1179,11 +1448,14 @@ def main():
                 source = f"Tana — {workspace_name}" + (f" ({workspace_id})" if workspace_id else "")
                 cats, refs = categories_from_fields(fields, cat_map)
                 text = build_note(title, r["date"], derive_tags(title, keywords), cats, nid,
-                                  r.get("tags") or [], refs, source, transcript, summary)
+                                  r.get("tags") or [], refs, source, transcript, summary,
+                                  tana_memo_id=r.get("memo_id") or None)
                 if not a.dry_run:
                     outdir.mkdir(parents=True, exist_ok=True)
                     path.write_text(text)
                     id_index[nid] = path
+                    if r.get("memo_id"):
+                        id_index[r["memo_id"]] = path
                     fp = fingerprint("\n".join(transcript))
                     if fp:
                         fp_index.setdefault(fp, path)
@@ -1205,7 +1477,9 @@ def main():
         flush()
 
     remaining = sum(1 for nid in order if rows[nid]["mirrored"] in todo_states)
-    print(f"\nwritten={done} skipped_existing={skipped} empty={empty} failed={failed}"
+    anchored, unanchored = anchor_counts(rows, order)
+    print(f"\nwritten={done} skipped_existing={skipped} empty={empty} failed={failed} "
+          f"anchored={anchored} unanchored={unanchored}"
           + (" (dry run — nothing written)" if a.dry_run else ""))
     if interrupted:
         print("interrupted — manifest saved; resumable: re-run the same command")

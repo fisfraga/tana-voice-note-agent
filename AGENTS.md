@@ -13,7 +13,7 @@ The agent-side of the Tana Voice Note Agent: voice notes are captured and transc
 | `vn-config.yaml` | THE config: Tana connection, archive location/layout, catalog vocabulary. Read it first. Gitignored — created from `vn-config.example.yaml` on first run. `<archive>` throughout these docs means the resolved `archive.dir`, which may point outside this repo. |
 | `.agents/skills/<name>/SKILL.md` | The four skills: `vn-sync`, `vn-process`, `vn-catalog`, `vn-help`. Claude sees them via `.claude/skills/` symlinks; Hermes via `skills.external_dirs`. |
 | `commands/` | The command library — 22 commands in 5 categories plus 8 lens files in `commands/lenses/`. `commands/INDEX.md` is the catalog; a command file's **System Prompt** section becomes your working instructions when it runs (`lens-analysis` also loads its lens file). |
-| `scripts/sync_voice_notes.py` | Config-driven sync (pure stdlib). Flags: `--setup`, `--since N`, `--history` (alias `--all`; windowed, resumable, `--window N`, `--batch N`, `--yes`, `--retry-empty`), `--source`, `--tag` (repeatable), `--dry-run`, `--limit N`, `--refresh-categories`. Syncs every voice memo (`has: audio`) by default; Super Folder fields land in frontmatter (`tana_tags`, `tana_refs`). Tests: `python3 -m unittest discover -s tests -v`. |
+| `scripts/sync_voice_notes.py` | Config-driven sync (pure stdlib). Flags: `--setup`, `--since N`, `--history` (alias `--all`; windowed, resumable, `--window N`, `--batch N`, `--yes`, `--retry-empty`), `--source`, `--tag` (repeatable), `--dry-run`, `--limit N`, `--refresh-categories`, `--relink`. Syncs every voice memo (`has: audio`) by default, anchored on the **day-node bullet** (`tana_id`; the hidden audio node is `tana_memo_id` and is never written to); Super Folder fields land in frontmatter (`tana_tags`, `tana_refs`). Tests: `python3 -m unittest discover -s tests -v`. |
 | `Voice-Notes/` | The archive (unless `archive.dir` points elsewhere): `YYYY/` note files, `Collections/`, `Outputs/`, `INDEX.md`, `sync-manifest.tsv`. |
 | `docs/` | `how-it-works.md` (architecture), `frontmatter-schema.md` (canonical note format), `customization.md` (layouts, history import, categories, adding commands), `help.md` (the in-agent manual), `videos/` (course guide + transcripts). |
 | `CHANGELOG.md` / `VERSION` | Release notes and the single version string (3.0.0). |
@@ -31,14 +31,15 @@ The agent-side of the Tana Voice Note Agent: voice notes are captured and transc
 ## Working rules
 
 1. **Local files are canonical.** Tana steps are optional everywhere: no Tana MCP in this session → skip every Tana step silently; nothing is lost.
-2. **Never overwrite a synced note file**, and **never edit a note's body** — the one exception is `/vn-sync` enrichment (clean + summarize), which touches only notes written in the current sync. Catalog and process edit frontmatter only.
-3. **Secrets:** the Tana token lives in the harness MCP config or `TANA_MCP_TOKEN`. Never write it to any file in this repo, never print it.
-4. **Outputs** go under `<archive>/Outputs/` with frontmatter (`type: vn-output`, `command`, `sources`); each source note gets the command appended to `processed:` and a wikilink + value gloss appended to `outputs:`.
-5. **The user's ideas are sacred** — commands develop their thinking, never replace it. Fidelity over polish.
-6. **Generated files** (`<archive>/INDEX.md`, `<archive>/sync-manifest.tsv`) are regenerated, never hand-patched.
-7. `build/build-feature` acts only inside folders the user explicitly names.
-8. End substantive turns with one concrete next step.
-9. Questions about how the system works, a concept, a step, or "what can you do" → `/vn-help`. Talking about their own notes → `/vn-process`.
+2. **Write to Tana only through a note's `tana_id`** — the day-node bullet the user sees. Never tag or set fields on a `Voice memo captured …` node (`tana_memo_id`).
+3. **Never overwrite a synced note file**, and **never edit a note's body** — the one exception is `/vn-sync` enrichment (clean + summarize), which touches only notes written in the current sync. Catalog and process edit frontmatter only.
+4. **Secrets:** the Tana token lives in the harness MCP config or `TANA_MCP_TOKEN`. Never write it to any file in this repo, never print it.
+5. **Outputs** go under `<archive>/Outputs/` with frontmatter (`type: vn-output`, `command`, `sources`); each source note gets the command appended to `processed:` and a wikilink + value gloss appended to `outputs:`.
+6. **The user's ideas are sacred** — commands develop their thinking, never replace it. Fidelity over polish.
+7. **Generated files** (`<archive>/INDEX.md`, `<archive>/sync-manifest.tsv`) are regenerated, never hand-patched.
+8. `build/build-feature` acts only inside folders the user explicitly names.
+9. End substantive turns with one concrete next step.
+10. Questions about how the system works, a concept, a step, or "what can you do" → `/vn-help`. Talking about their own notes → `/vn-process`.
 
 ## Typical flows
 

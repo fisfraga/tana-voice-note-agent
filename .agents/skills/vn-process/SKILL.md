@@ -58,7 +58,7 @@ Read the selected notes (titles + summaries first; full transcripts only when fe
 
 ### 5. Optional Tana write-back (only if Tana MCP tools exist in this session)
 
-If the user wants the output in Tana too: `import_tana_paste` a condensed version under the source node or today's day node. If Tana is unavailable, skip silently — the local file is canonical. (Connection sync for areas/projects/topics lives in `/vn-catalog`, governed by `tana.sync_connections`.)
+If the user wants the output in Tana too: `import_tana_paste` a condensed version under the source node (`tana_id` — the day-node bullet, never `tana_memo_id`) or today's day node. If Tana is unavailable, skip silently — the local file is canonical. (Connection sync for areas/projects/topics lives in `/vn-catalog`, governed by `tana.sync_connections`.)
 
 ## Other modes
 

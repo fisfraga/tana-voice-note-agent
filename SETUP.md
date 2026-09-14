@@ -48,7 +48,7 @@ python3 scripts/sync_voice_notes.py --setup   # or in a terminal
 - Optionally seed `catalog.areas/projects/topics` with your own vocabulary — `/vn-catalog` will propose from these.
 - `archive.enrich` (default `true`) cleans raw transcripts and fills missing summaries right after each sync.
 - `tana.sync_connections` decides whether confirmed areas/projects/topics mirror back to your Tana Super Folder fields (`/vn-sync setup` asks; default `false` = Tana is capture-only).
-- `tana.category_fields` maps your Super Folder fields (`Area(s)` / `Project(s)` / `Topic(s)` in the template) to frontmatter — notes that already carry them in Tana arrive categorized. Add any other superfolder you use. With the template, pick **[3] both** at setup: the fields sit on the tagged note, and `both` syncs that note instead of only the recording underneath it.
+- `tana.category_fields` maps your Super Folder fields (`Area(s)` / `Project(s)` / `Topic(s)` in the template) to frontmatter — notes that already carry them in Tana arrive categorized. Add any other superfolder you use. With the template, pick **[3] both** at setup so tagged notes whose audio was removed are included too.
 
 > **Your notes stay yours.** `Voice-Notes/` is gitignored — synced notes, generated outputs, collections, the index and the manifest are never committed, even though the default archive lives inside this repo. Only the folder scaffold (the READMEs) is tracked. If you point `archive.dir` somewhere else, that folder is outside git entirely. `vn-config.yaml` is gitignored too; `vn-config.example.yaml` is the tracked template.
 
@@ -89,3 +89,4 @@ The history import copies notes in without the per-note AI cleanup — do that l
 - **Connection sync-back fails** — `tana.category_fields` must name your template's Super Folder fields (`Area` / `Areas` / `Area(s)` all match; rename them in `vn-config.yaml` for non-English templates); delete `tana.field_ids` to force re-resolution. Sync-back needs Tana MCP in the session — the script alone can't do it.
 - **`search returned 1000`** — Tana caps a search at 1000 results. Use `/vn-sync history`, which pages through the whole workspace.
 - **Categories missing on old notes** — they were synced before Tana had the fields, or before this version. Run `python3 scripts/sync_voice_notes.py --refresh-categories --history --dry-run`, then without `--dry-run`.
+- **A tag or field the agent wrote doesn't show in Tana** — the note's `tana_id` points at the hidden audio node (archives synced before day-node anchoring). Run `python3 scripts/sync_voice_notes.py --relink --history`; every write then targets the bullet in your day node.

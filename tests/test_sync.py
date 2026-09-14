@@ -289,6 +289,149 @@ class FrontmatterTests(unittest.TestCase):
         self.assertEqual(same, out)
 
 
+MEMO_HIT = {"id": "MEMO1", "name": "Voice memo captured Today, 4:42 PM ", "tags": [],
+            "created": "2026-09-14T19:42:03.371Z",
+            "breadcrumb": ["Daily notes", "2026", "Week 38", "Today, Mon, Sep 14", "The purpose of the app"]}
+DAY_KIDS = {
+    "2026-09-14": [
+        {"id": "", "name": "", "created": "2026-09-14T19:09:04.673Z", "tags": [], "childCount": 0},
+        {"id": "CLUTTER", "name": "", "created": "2026-09-14T19:42:03.370Z", "tags": [], "childCount": 0},
+        {"id": "BULLET1", "name": "The purpose of the app", "created": "2026-09-14T19:42:03.367Z",
+         "tags": [{"id": "x", "name": "voice note "}], "childCount": 2},
+        {"id": "OTHER", "name": "How to learn Astrology", "created": "2026-09-14T17:25:50.612Z", "tags": []},
+    ],
+    "2026-09-13": [{"id": "PREV", "name": "Late night thought", "created": "2026-09-14T02:30:00.100Z", "tags": []}],
+}
+
+
+def kids_fn(calls):
+    def fn(date):
+        calls.append(date)
+        return DAY_KIDS.get(date, [])
+    return fn
+
+
+class AnchorTests(unittest.TestCase):
+    def test_anchor_by_timestamp_skips_clutter(self):
+        calls = []
+        b = sync.find_anchor(MEMO_HIT, kids_fn(calls))
+        self.assertEqual(b["id"], "BULLET1")            # CLUTTER is closer but unnamed
+        self.assertEqual(calls, ["2026-09-14"])         # first day had a match: no ±1 lookups
+
+    def test_fallback_by_breadcrumb_title(self):
+        hit = dict(MEMO_HIT, created="2026-09-14T10:00:00Z")   # far from every child
+        b = sync.find_anchor(hit, kids_fn([]))
+        self.assertEqual(b["id"], "BULLET1")
+
+    def test_no_anchor_keeps_memo(self):
+        hit = dict(MEMO_HIT, created="2026-09-14T10:00:00Z", breadcrumb=[])
+        self.assertIsNone(sync.find_anchor(hit, kids_fn([])))
+        hit = dict(MEMO_HIT, created=None, breadcrumb=[])
+        self.assertIsNone(sync.find_anchor(hit, kids_fn([])))
+
+    def test_previous_day_lookup(self):
+        hit = {"id": "M2", "name": "Voice memo captured", "tags": [], "created": "2026-09-14T02:30:01.000Z",
+               "breadcrumb": []}
+        calls = []
+        b = sync.find_anchor(hit, kids_fn(calls))
+        self.assertEqual(b["id"], "PREV")
+        self.assertEqual(calls, ["2026-09-14", "2026-09-13"])
+
+    def test_parse_created_and_neighbours(self):
+        import datetime as dt
+        want = dt.datetime(2026, 9, 14, 19, 42, 3, 371000, tzinfo=dt.timezone.utc).timestamp()
+        self.assertAlmostEqual(sync.parse_created("2026-09-14T19:42:03.371Z"), want, places=3)
+        self.assertEqual(sync.parse_created(1700000000000), 1700000000.0)
+        self.assertIsNone(sync.parse_created("not a date"))
+        self.assertEqual(sync.neighbour_dates("2026-01-01"), ["2026-01-01", "2025-12-31", "2026-01-02"])
+
+    def test_add_hits_registers_bullet_with_memo_id(self):
+        rows, order = {}, []
+        resolver = lambda h: sync.find_anchor(h, kids_fn([]))
+        self.assertEqual(sync.add_hits(rows, order, [MEMO_HIT], resolver), 1)
+        self.assertEqual(order, ["BULLET1"])
+        self.assertEqual(rows["BULLET1"]["memo_id"], "MEMO1")
+        self.assertEqual(rows["BULLET1"]["anchor"], "bullet")
+        self.assertEqual(rows["BULLET1"]["tags"], ["voice-note"])
+        self.assertEqual(rows["BULLET1"]["title"], "The purpose of the app")
+        # the same memo again, or the bullet itself as a tagged hit: no new rows
+        self.assertEqual(sync.add_hits(rows, order, [MEMO_HIT], resolver), 0)
+        tagged = {"id": "BULLET1", "name": "The purpose of the app", "tags": [{"id": "x", "name": "voice note "}],
+                  "created": "2026-09-14T19:42:03.367Z"}
+        self.assertEqual(sync.add_hits(rows, order, [tagged], resolver), 0)
+        self.assertEqual(sync.anchor_counts(rows, order), (1, 0))
+        # unresolvable memo stays keyed on itself
+        lonely = dict(MEMO_HIT, id="MEMO9", created="2026-09-14T10:00:00Z", breadcrumb=[])
+        self.assertEqual(sync.add_hits(rows, order, [lonely], resolver), 1)
+        self.assertEqual(rows["MEMO9"]["anchor"], "memo")
+        self.assertEqual(sync.anchor_counts(rows, order), (1, 1))
+
+    def test_add_hits_bullet_first_then_memo_merges(self):
+        rows, order = {}, []
+        resolver = lambda h: sync.find_anchor(h, kids_fn([]))
+        tagged = {"id": "BULLET1", "name": "The purpose of the app", "tags": [{"id": "x", "name": "voice note "}],
+                  "created": "2026-09-14T19:42:03.367Z"}
+        self.assertEqual(sync.add_hits(rows, order, [tagged, MEMO_HIT], resolver), 1)
+        self.assertEqual(rows["BULLET1"]["memo_id"], "MEMO1")
+
+    def test_add_hits_relink_old_memo_row(self):
+        rows = {"MEMO1": {"date": "2026-09-14", "node_id": "MEMO1", "mirrored": "done",
+                          "title": "Voice memo captured Today, 4:42 PM", "synced_at": "2026-09-14", "memo_id": ""}}
+        order = ["MEMO1"]
+        resolver = lambda h: sync.find_anchor(h, kids_fn([]))
+        self.assertEqual(sync.add_hits(rows, order, [MEMO_HIT], resolver), 0)           # normal run: untouched
+        self.assertEqual(sync.add_hits(rows, order, [MEMO_HIT], resolver, relink=True), 1)
+        self.assertEqual(rows["BULLET1"]["memo_id"], "MEMO1")
+        self.assertEqual(rows["BULLET1"]["anchor"], "bullet")
+        self.assertEqual(rows["MEMO1"]["mirrored"], "done")
+
+    def test_manifest_six_columns_and_memo_index(self):
+        with tempfile.TemporaryDirectory() as d:
+            p = Path(d) / "sync-manifest.tsv"
+            p.write_text("date\tnode_id\tmirrored\ttitle\n2026-01-01\tA\tdone\tFour cols\n"
+                         "2026-01-02\tB\tdone\tFive cols\t2026-09-01\n")
+            rows, order = sync.load_manifest(p)
+            self.assertEqual(rows["A"]["memo_id"], "")
+            self.assertEqual(rows["B"]["synced_at"], "2026-09-01")
+            rows["C"] = {"date": "2026-01-03", "node_id": "C", "mirrored": "done", "title": "Six",
+                         "synced_at": "2026-09-14", "memo_id": "M"}
+            order.append("C")
+            sync.write_manifest(p, rows, order)
+            rows2, _ = sync.load_manifest(p)
+            self.assertEqual(rows2["C"]["memo_id"], "M")
+            self.assertEqual(sync.memo_index(rows2), {"M": "C"})
+            self.assertEqual(p.read_text().split("\n")[2], "date\tnode_id\tmirrored\ttitle\tsynced_at\tmemo_id")
+
+    def test_index_by_tana_id_includes_memo_id(self):
+        with tempfile.TemporaryDirectory() as d:
+            f = Path(d) / "2026" / "n.md"
+            f.parent.mkdir()
+            f.write_text(sync.build_note("T", "2026-09-14", ["voice-note"], {}, "BULLET1", [], {}, "src",
+                                         ["a"], [], tana_memo_id="MEMO1"))
+            index, _ = sync.index_by_tana_id(Path(d))
+            self.assertEqual(index["BULLET1"], f)
+            self.assertEqual(index["MEMO1"], f)
+
+    def test_frontmatter_memo_id_after_tana_id(self):
+        lines = sync.frontmatter_lines("T", "2026-09-14", [], {}, "BULLET1", [], {}, "src", tana_memo_id="MEMO1")
+        self.assertEqual(lines[lines.index("tana_id: BULLET1") + 1], "tana_memo_id: MEMO1")
+        lines = sync.frontmatter_lines("T", "2026-09-14", [], {}, "BULLET1", [], {}, "src")
+        self.assertNotIn("tana_memo_id: MEMO1", lines)
+
+    def test_relink_frontmatter_edit_keeps_body(self):
+        text = sync.build_note("T", "2026-09-14", ["voice-note"], {}, "MEMO1", [], {}, "src", ["words"], [])
+        body = text.split("\n---", 1)[1]
+        out = sync.edit_frontmatter(text, {"tana_id": "BULLET1", "tana_memo_id": "MEMO1"})
+        out, changes = sync.merge_categories(out, {"areas": ["home"]}, {"areas/home": "H1"}, ["voice-note"])
+        self.assertTrue(out.endswith(body))
+        fm, _ = sync.split_frontmatter(out)
+        self.assertEqual(fm[fm.index("tana_id: BULLET1") + 1], "tana_memo_id: MEMO1")
+        self.assertIn("areas: [home]", fm)
+        self.assertIn("tana_tags: [voice-note]", fm)
+        self.assertEqual(sync.TANA_ID_RE.search(out).group(1), "BULLET1")
+        self.assertEqual(sync.TANA_MEMO_ID_RE.search(out).group(1), "MEMO1")
+
+
 class ConfigTests(unittest.TestCase):
     def test_fallback_parser_inline_map_and_ints(self):
         with tempfile.TemporaryDirectory() as d:

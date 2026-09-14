@@ -5,8 +5,12 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ 1. CAPTURE (Tana)                                                       │
-│    You speak → Tana transcribes → voice memo node (audio + text),       │
-│    Summary and Super Folder fields (the paid Tana template automates it) │
+│    You speak → Tana transcribes → a bullet in your day node (title,     │
+│    Transcript, Summary, Super Folder fields) + a hidden audio node      │
+└──────────────────────────────┬──────────────────────────────────────────┘
+                               │  the day-node bullet is the anchor
+                               │  (tana_id); the audio node is only used
+                               │  to discover captures (tana_memo_id)
 └──────────────────────────────┬──────────────────────────────────────────┘
                                │  /vn-sync   (or /vn-sync history: the whole
                                │  past, paged in date windows, resumable)

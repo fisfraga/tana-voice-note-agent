@@ -62,9 +62,24 @@ tana:
     people: "Person(s)"     # any other superfolder you use becomes its own list
 ```
 
-Each value becomes a kebab-case entry (`4. Home & Family` → `home-family`) and its Tana node id is remembered in `tana_refs`, so `/vn-catalog` knows the value is confirmed and can write references back. The node's own supertags land in `tana_tags`. Untagged audio memos have no fields, so they arrive uncategorized — `/vn-catalog new` handles those.
+Each value becomes a kebab-case entry (`4. Home & Family` → `home-family`) and its Tana node id is remembered in `tana_refs`, so `/vn-catalog` knows the value is confirmed and can write references back. The bullet's own supertags land in `tana_tags`. Untagged captures have no fields, so they arrive uncategorized — `/vn-catalog new` handles those.
 
-**One thing to know:** in Tana the recording (the node `has: audio` finds) is a *child* of the tagged `#voice note` that carries the fields. With the default `source: all_audio` the sync reaches the recording and never sees the fields. If you use the template, set `tana.source: both` (setup offers it as option 3) — the sync then prefers the tagged note and dedupes its audio twin, and the categories come along.
+## Two nodes per capture: the day node is the anchor
+
+Every voice capture in Tana creates two nodes. The one you see is the **bullet under your day node** (*Daily notes → year → week → day*), with a title Tana derives from what you said — and, tagged or not, the Transcript, Summary and Super Folder fields. Behind it Tana keeps a hidden **`Voice memo captured …`** node that holds the audio. The audio search that discovers your memos only ever finds the hidden one, and anything written to it (a tag, an Area) never shows up in your outline.
+
+So the sync anchors every note on the **day-node bullet**: it opens the capture's day node, matches the capture by timestamp, and uses that bullet as `tana_id`; the hidden node is remembered as `tana_memo_id`. Every write-back — tags, Super Folder fields, pasted outputs — goes to `tana_id`. Costs one calendar lookup and one children listing per day that has captures.
+
+Archives synced by an older version point at the hidden nodes. Fix them once:
+
+```bash
+python3 scripts/sync_voice_notes.py --relink --history --dry-run   # what would change
+python3 scripts/sync_voice_notes.py --relink --history             # remap tana_id, frontmatter only
+```
+
+If you moved a note out of its day node, the sync can't find its bullet and keeps the hidden node as `tana_id` (the note still syncs); `--relink` picks it up later if it ever finds the twin.
+
+Two small things to know: the day lookup uses Tana's *get-or-create* calendar call, so a sweep may create an empty Day node for a day that had none (harmless, and only when a capture's timestamp sits near midnight); and a bullet you renamed after capture still anchors by timestamp, but not by title.
 
 Two companions:
 
