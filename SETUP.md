@@ -4,8 +4,8 @@ Five steps, ~5 minutes. You'll connect Tana's local API to your agent harness, t
 
 ## 1. Capture side — Tana
 
-- **Nothing special required:** any Tana voice memo syncs — record one and it has an audio recording attached, which is all `/vn-sync` looks for by default.
-- Use the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) (recommended): voice notes get a `#voice note` supertag with **Transcript** and **Transcript Summary (AI)** fields, auto-transcribed on capture. Setup can then narrow the sync to that supertag if you want only those.
+- **Nothing special required:** any Tana voice memo syncs — record one and it has an audio recording attached, which is all `/vn-sync` looks for by default. Everything in this repo works without the template; setup asks once whether you have it and never mentions supertags if you don't.
+- With the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) (recommended): voice notes get a `#voice note` supertag with **Transcript**, **Transcript Summary (AI)** and Area(s)/Project(s)/Topic(s) fields, auto-transcribed on capture. Answer *yes* at setup and choose `both`, so those fields come into the archive.
 - Or roll your own: transcripts are read from a Transcript field *or* from the node's child bullets, so plain memos and custom supertags both work. If your field labels differ, set them in `vn-config.yaml → tana.field_labels`.
 
 ## 2. Enable Tana's local MCP server

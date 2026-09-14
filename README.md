@@ -6,7 +6,7 @@ Record voice notes in [Tana](https://tana.inc). Sync them to your computer as cl
 
 v1 and v2 lived inside Tana, where every command ran on one note at a time. v3 finally earns the name **Agent**: your notes become local files a real agent can read, connect, and act on — every command can draw on your *whole archive*, and the library has been redesigned for that reality: the full v2 intelligence, consolidated into a direct, non-redundant set, plus agent-native commands that were impossible inside an outliner.
 
-> **This repo is the free companion to the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent)** (paid) — the Tana side that captures, transcribes, and organizes your voice notes. You need Tana and (recommended) the template for the capture flow; this repo is everything that happens after.
+> **This repo is the free companion to the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent)** (paid) — the Tana side that captures, transcribes, and organizes your voice notes. **It works without the template too:** any Tana voice memo syncs out of the box, and setup only brings up the `#voice note` supertag if you say you have it. The template adds auto-transcription, summaries and Super Folder fields on the capture side; this repo is everything that happens after.
 
 ## What you get
 

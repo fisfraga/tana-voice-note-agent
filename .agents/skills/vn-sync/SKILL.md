@@ -26,7 +26,7 @@ Do **not** read the whole archive or the command library for a sync.
 
 ## What counts as a voice note
 
-**By default, every voice memo in the workspace** — any Tana node with an audio recording attached (`has: audio`), tagged or not. A supertag is one way *some* people mark their memos; it is never a requirement, and you must not assume the user has one.
+**By default, every voice memo in the workspace** — any Tana node with an audio recording attached (`has: audio`), tagged or not. This repo and its skills work for anyone using Tana, with or without the paid Voice Note Agent template. The `#voice note` supertag only exists for people who installed that template; it is never a requirement, and you must not assume the user has one. Use a tag only when `tana.voice_note_tag_id` is set or the user names one.
 
 `tana.source` in `vn-config.yaml` settles it:
 
@@ -50,7 +50,11 @@ Do **not** read the whole archive or the command library for a sync.
 2. Fast path — run from the repo root with the shell tool:
    `python3 scripts/sync_voice_notes.py --setup`
    (interactive: it lists workspaces, counts the voice memos in the one you pick, asks what should sync, and writes the choices into `vn-config.yaml`).
-3. Fallback (no Python, or the user prefers chat): call the Tana MCP tools yourself — `list_workspaces`, then `search_nodes {"and":[{"has":"audio"}]}` on the chosen workspace to count its voice memos. Ask **what should sync** (see *What counts as a voice note* above). Only if they choose `tagged`/`both`, `list_tags` and show candidates whose name contains "voice". Edit `vn-config.yaml` yourself (`tana.workspace_id`, `tana.workspace_name`, `tana.source`, and `tana.voice_note_tag_id` only when a tag was chosen).
+3. Fallback (no Python, or the user prefers chat): call the Tana MCP tools yourself — `list_workspaces`, then `search_nodes {"and":[{"has":"audio"}]}` on the chosen workspace to count its voice memos. Then ask **one gating question: "Do you use the Tana Voice Note Agent template (the `#voice note` supertag)?"**
+   - **No** (plain Tana, no template): `tana.source: all_audio`, no tag, done — do not mention supertags again. Everything in this repo works without the template.
+   - **Yes**: recommend `both` (their Area/Project/Topic fields live on the tagged note; `both` brings them in and dedupes the audio twin), `list_tags` and show candidates whose name contains "voice", record `tana.voice_note_tag_id`.
+
+   Edit `vn-config.yaml` yourself (`tana.workspace_id`, `tana.workspace_name`, `tana.source`, and `tana.voice_note_tag_id` only when a tag was chosen).
 4. Ask one more setup question: *"Should confirmed areas/projects/topics also sync back to your Tana Super Folder fields, or is Tana capture-only?"* — record the answer as `tana.sync_connections: true|false` (used by `/vn-catalog`).
 5. If neither Python nor Tana MCP is available, point the user to `SETUP.md` and stop.
 6. If the workspace count came back as `1000+` or the user mentions years of memos, suggest `/vn-sync history` for the first import.

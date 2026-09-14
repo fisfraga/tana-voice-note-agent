@@ -811,14 +811,22 @@ def run_setup(mcp, cfg):
     n_audio = count({"and": [{"has": "audio"}]})
     print(f"\n{ws['name']} holds {n_audio} voice memo(s) — nodes with a recording attached."
           + (" Run --history for the exact count." if n_audio.endswith("+") else ""))
-    print("\nWhat should sync pull in?")
-    print("  [1] every voice memo                                   (default)")
-    print("  [2] only memos carrying a specific supertag")
-    print("  [3] both — every voice memo plus everything with that supertag")
-    print("      (recommended with the Voice Note Agent template: your Area/Project/Topic")
-    print("       fields live on the tagged note, and [3] brings them into the archive)")
-    choice = input("Choose [1]: ").strip() or "1"
-    source = {"1": "all_audio", "2": "tagged", "3": "both"}.get(choice, "all_audio")
+    print("\nNo supertag is needed — plain Tana voice memos sync as they are.")
+    has_template = (input("Do you use the Tana Voice Note Agent template (the #voice note "
+                          "supertag)? [y/N]: ").strip().lower() in ("y", "yes"))
+    if has_template:
+        print("\nWhat should sync pull in?")
+        print("  [1] every voice memo (audio only — the #voice note fields are not read)")
+        print("  [2] only notes carrying the #voice note supertag")
+        print("  [3] both — every voice memo plus every #voice note      (recommended:")
+        print("      your Area/Project/Topic fields live on the tagged note, and [3]")
+        print("      brings them into the archive)")
+        choice = input("Choose [3]: ").strip() or "3"
+        source = {"1": "all_audio", "2": "tagged", "3": "both"}.get(choice, "both")
+    else:
+        source = "all_audio"
+        print("Syncing every voice memo (any node with a recording attached). You can add a "
+              "supertag later with --source both --tag <id>.")
 
     tag = None
     if source in ("tagged", "both"):
