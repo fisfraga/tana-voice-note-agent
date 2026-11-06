@@ -8,6 +8,8 @@ v1 and v2 lived inside Tana, where every command ran on one note at a time. v3 f
 
 > **This repo is the free companion to the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent)** (paid) — the Tana side that captures, transcribes, and organizes your voice notes. **It works without the template too:** any Tana voice memo syncs out of the box, and setup only brings up the `#voice note` supertag if you say you have it. The template adds auto-transcription, summaries and Super Folder fields on the capture side; this repo is everything that happens after.
 
+▶ **Watch the v3 walkthrough:** [Tana Voice Notes in Claude Code | My Voice Note Agent v3.0](https://www.youtube.com/watch?v=VGxZMAU4OIs) (47 min) — install from GitHub, sync, catalog, write-back to Tana and processing, all live. The full course is the [Tana Voice Note Agent playlist](https://www.youtube.com/playlist?list=PLl5lrEYUPQvQBSzphagD06u4-QzLRJQDg) on YouTube.
+
 ## What you get
 
 - **`/vn-sync`** — pull your voice memos out of Tana into a chronological markdown archive (`Voice-Notes/2026/2026-08-31-my-idea.md`), with frontmatter, idempotent re-runs, and a never-overwrite guarantee. **Every voice memo syncs by default** — any node with a recording attached, tagged or not; narrowing to a supertag is opt-in (`--source tagged`) — then enrich new arrivals (clean raw transcripts, fill missing summaries). `/vn-sync history` imports your **entire history**, years back, in every format, resumable, with a count and a cost warning before it starts. Super Folder fields (Area(s) / Project(s) / Topic(s), or your own) arrive in the frontmatter. Python script fast path, pure-MCP fallback.
@@ -68,6 +70,6 @@ Details: [docs/how-it-works.md](docs/how-it-works.md) · [docs/frontmatter-schem
 
 ## About
 
-Built by [Felipe Fraga (Poggi)](https://github.com/fisfraga) — Tana Ambassador. The Voice Note Agent has 100+ users and 18+ months of development across v1 → v3. More at [fisfraga.com/tana-voice-note-agent](https://fisfraga.com/tana-voice-note-agent).
+Built by [Fis Fraga (Felipe Poggi)](https://github.com/fisfraga) — Tana Ambassador. The Voice Note Agent has 100+ users and 18+ months of development across v1 → v3. More at [fisfraga.com/tana-voice-note-agent](https://fisfraga.com/tana-voice-note-agent).
 
 MIT licensed. The command prompts are yours to adapt — see [docs/customization.md](docs/customization.md) for adding your own commands.

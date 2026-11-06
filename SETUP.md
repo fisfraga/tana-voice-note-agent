@@ -75,13 +75,14 @@ The history import copies notes in without the per-note AI cleanup — do that l
 
 | Harness | Skills load from | Notes |
 |---|---|---|
-| **Claude Code** | `.claude/skills/` (symlinks to `.agents/skills/`) | Everything works out of the box. |
+| **Claude Code** | `.claude/skills/` (symlinks to `.agents/skills/`) | Everything works out of the box. On Windows, see *Skills don't show up on Windows* below. |
 | **Claude Cowork** | same | If the sandbox can't run Python, the skills' MCP fallback covers sync. |
 | **Codex / others** | `AGENTS.md` + `.agents/skills/` | Invoke skills by asking for them by name; `TANA_MCP_TOKEN` env recommended. |
 | **Hermes Agent** | `skills.external_dirs` → `.agents/skills/` | No Tana MCP? Run the script for sync; every Tana write-back step skips cleanly. |
 
 ## Troubleshooting
 
+- **Skills don't show up on Windows** — `.claude/skills/` holds symlinks, and Git for Windows checks them out as small text files unless symlinks are enabled. Re-clone with `git clone -c core.symlinks=true https://github.com/fisfraga/tana-voice-note-agent.git` (needs Developer Mode or an admin terminal), or delete the four entries in `.claude/skills/` and copy the four folders from `.agents/skills/` in their place.
 - **`No Tana token found`** — redo step 3; check `claude mcp list` shows `tana-local`.
 - **Connection refused** — Tana desktop isn't running, or the local API is disabled.
 - **`no transcript` failures on sync** — the note hasn't been transcribed in Tana yet (open it in Tana; the template's automation fills the Transcript field). Re-run `/vn-sync` later; failed rows retry automatically.

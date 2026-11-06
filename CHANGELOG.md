@@ -2,7 +2,7 @@
 
 All notable changes to the Tana Voice Note Agent (agent side). The Tana template has its own release notes at [fisfraga.com/tana-voice-note-agent](https://fisfraga.com/tana-voice-note-agent). Version lives in `VERSION`.
 
-## 3.0.0 — 2026-09
+## 3.0.0 — 2026-11-06
 
 The version that earns the name *Agent*. v1 and v2 ran inside Tana, one note at a time. v3 mirrors your voice notes into a local markdown archive and hands them to a real agent — Claude Code, Claude Cowork, Codex, Hermes, anything that reads files — so every command can draw on your whole history.
 
