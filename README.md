@@ -2,11 +2,13 @@
 
 **Your voice notes, out of the outline and into the hands of a real agent.**
 
-Record voice notes in [Tana](https://tana.inc). Sync them to your computer as clean markdown. Then let Claude Code, Claude Cowork, or any capable AI harness *actually work with them*: analyze a week of thinking, crystallize insights, extract every task, write the article you drafted out loud — even build the document or feature you described while walking.
+Record voice notes in [Tana Outliner](https://outliner.tana.inc/personal). Sync them to your computer as clean markdown. Then let Claude Code, Claude Cowork, or any capable AI harness *actually work with them*: analyze a week of thinking, crystallize insights, extract every task, write the article you drafted out loud — even build the document or feature you described while walking.
+
+> **Built for [Tana Outliner](https://outliner.tana.inc/personal)** — Tana's note-taking / PKM app. Not the newer Tana meeting platform at tana.inc. Wherever this repo says "Tana", it means Tana Outliner.
 
 v1 and v2 lived inside Tana, where every command ran on one note at a time. v3 finally earns the name **Agent**: your notes become local files a real agent can read, connect, and act on — every command can draw on your *whole archive*, and the library has been redesigned for that reality: the full v2 intelligence, consolidated into a direct, non-redundant set, plus agent-native commands that were impossible inside an outliner.
 
-> **This repo is the free companion to the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent)** (paid) — the Tana side that captures, transcribes, and organizes your voice notes. **It works without the template too:** any Tana voice memo syncs out of the box, and setup only brings up the `#voice note` supertag if you say you have it. The template adds auto-transcription, summaries and Super Folder fields on the capture side; this repo is everything that happens after.
+> **This repo is the free companion to the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent)** (paid) — the Tana Outliner side that captures, transcribes, and organizes your voice notes. **It works without the template too:** any Tana voice memo syncs out of the box, and setup only brings up the `#voice note` supertag if you say you have it. The template adds auto-transcription, summaries and Super Folder fields on the capture side; this repo is everything that happens after.
 
 ▶ **Watch the v3 walkthrough:** [Tana Voice Notes in Claude Code | My Voice Note Agent v3.0](https://www.youtube.com/watch?v=VGxZMAU4OIs) (47 min) — install from GitHub, sync, catalog, write-back to Tana and processing, all live. The full course is the [Tana Voice Note Agent playlist](https://www.youtube.com/playlist?list=PLl5lrEYUPQvQBSzphagD06u4-QzLRJQDg) on YouTube.
 
@@ -63,7 +65,7 @@ Details: [docs/how-it-works.md](docs/how-it-works.md) · [docs/frontmatter-schem
 
 ## Requirements
 
-- [Tana](https://tana.inc) with the local API/MCP server enabled (desktop app)
+- [Tana Outliner](https://outliner.tana.inc/personal) desktop app with the local API/MCP server enabled (not the Tana meeting platform at tana.inc)
 - The [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) for the capture side (recommended, not required — plain Tana voice memos sync out of the box, and any `#voice note`-style supertag with a Transcript field works too)
 - An AI agent harness (Claude Code / Cowork recommended)
 - Python 3.9+ for the sync fast path (optional — there's a pure-MCP fallback)

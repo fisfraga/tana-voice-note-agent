@@ -1,16 +1,18 @@
 # Setup
 
-Five steps, ~5 minutes. You'll connect Tana's local API to your agent harness, then let the setup flow configure the rest.
+Five steps, ~5 minutes. You'll connect Tana Outliner's local API to your agent harness, then let the setup flow configure the rest.
 
-## 1. Capture side — Tana
+## 1. Capture side — Tana Outliner
+
+This system is built for [Tana Outliner](https://outliner.tana.inc/personal), Tana's note-taking / PKM app — not the newer Tana meeting platform at tana.inc. "Tana" below always means Tana Outliner.
 
 - **Nothing special required:** any Tana voice memo syncs — record one and it has an audio recording attached, which is all `/vn-sync` looks for by default. Everything in this repo works without the template; setup asks once whether you have it and never mentions supertags if you don't.
 - With the [Tana Voice Note Agent template](https://fisfraga.com/tana-voice-note-agent) (recommended): voice notes get a `#voice note` supertag with **Transcript**, **Transcript Summary (AI)** and Area(s)/Project(s)/Topic(s) fields, auto-transcribed on capture. Answer *yes* at setup and choose `both`, so those fields come into the archive.
 - Or roll your own: transcripts are read from a Transcript field *or* from the node's child bullets, so plain memos and custom supertags both work. If your field labels differ, set them in `vn-config.yaml → tana.field_labels`.
 
-## 2. Enable Tana's local MCP server
+## 2. Enable Tana Outliner's local MCP server
 
-In the Tana **desktop** app: **Settings → API / Labs → Local API (MCP)** — enable it and copy the **API token**. The server listens at `http://127.0.0.1:8262/mcp` while Tana is running.
+In the Tana Outliner **desktop** app: **Settings → API / Labs → Local API (MCP)** — enable it and copy the **API token**. The server listens at `http://127.0.0.1:8262/mcp` while Tana is running.
 
 > Tana must be open for sync to work — the server is local to the app.
 

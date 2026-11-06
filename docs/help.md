@@ -4,7 +4,7 @@ Written for the agent to read when the user asks *how* something works (loaded b
 
 ## The one-paragraph version
 
-You speak into Tana. Tana records and transcribes. `/vn-sync` mirrors each memo into a markdown file in your archive (local files become the canonical copy). `/vn-catalog` gives every note areas / projects / topics / people and keeps Collections and an index. `/vn-process` is the heart: pick a note, a day, a range, a collection or a theme; the agent suggests the best-fitting of 22 commands + 8 lenses and runs them, saving outputs and back-linking them into the source notes. Optionally, outputs and connections flow back to Tana. `/vn-help` is this page.
+You speak into [Tana Outliner](https://outliner.tana.inc/personal) — Tana's note-taking / PKM app, not the newer Tana meeting platform at tana.inc; "Tana" here always means the Outliner. Tana records and transcribes. `/vn-sync` mirrors each memo into a markdown file in your archive (local files become the canonical copy). `/vn-catalog` gives every note areas / projects / topics / people and keeps Collections and an index. `/vn-process` is the heart: pick a note, a day, a range, a collection or a theme; the agent suggests the best-fitting of 22 commands + 8 lenses and runs them, saving outputs and back-linking them into the source notes. Optionally, outputs and connections flow back to Tana. `/vn-help` is this page.
 
 ## The journey, step by step
 

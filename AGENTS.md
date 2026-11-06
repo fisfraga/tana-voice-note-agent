@@ -4,7 +4,7 @@ Read by any harness that honours `AGENTS.md` (Codex, Hermes Agent, ...). Claude 
 
 ## What this repo is
 
-The agent-side of the Tana Voice Note Agent: voice notes are captured and transcribed in Tana, mirrored here as markdown files, then analyzed/processed/built-upon by you, the agent. **Local files are canonical once synced; Tana is the capture device and an optional sync target.**
+The agent-side of the Tana Voice Note Agent: voice notes are captured and transcribed in Tana Outliner (https://outliner.tana.inc/personal — the note-taking / PKM app, not the Tana meeting platform at tana.inc; "Tana" in this repo always means Tana Outliner), mirrored here as markdown files, then analyzed/processed/built-upon by you, the agent. **Local files are canonical once synced; Tana is the capture device and an optional sync target.**
 
 ## Map
 
