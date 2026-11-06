@@ -72,6 +72,6 @@ Details: [docs/how-it-works.md](docs/how-it-works.md) · [docs/frontmatter-schem
 
 ## About
 
-Built by [Fis Fraga (Felipe Poggi)](https://github.com/fisfraga) — Tana Ambassador. The Voice Note Agent has 100+ users and 18+ months of development across v1 → v3. More at [fisfraga.com/tana-voice-note-agent](https://fisfraga.com/tana-voice-note-agent).
+Built by [Fis Fraga (Felipe Poggi)](https://github.com/fisfraga) — official Tana Ambassador (2023–2026). The Voice Note Agent has 100+ users and 18+ months of development across v1 → v3. More at [fisfraga.com/tana-voice-note-agent](https://fisfraga.com/tana-voice-note-agent).
 
 MIT licensed. The command prompts are yours to adapt — see [docs/customization.md](docs/customization.md) for adding your own commands.
