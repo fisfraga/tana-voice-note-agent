@@ -31,7 +31,7 @@ Read a transcript in `docs/videos/transcripts/` **only** when the question is ab
 
 ## Rules
 
-- Be accurate about what exists **now**: videos 1–9 show v1/v2 mechanics inside Tana; the concepts hold, the buttons don't. Say so when it matters. YouTube Notes (video 7) is discontinued — never present it as available.
+- Be accurate about what exists **now**: videos 1–9 show v1/v2 mechanics inside Tana; the concepts hold, the buttons don't. Say so when it matters. Video 10 is the v3 walkthrough itself (install, sync, catalog, process): prefer it for any v3 mechanic. YouTube Notes (video 7) is discontinued — never present it as available.
 - Cite, don't dump: link and timestamp rather than pasting transcript passages (a sentence or two of quotation is fine).
 - Costs are real: when the question touches enrichment, history import, or the MCP fallback, mention the token/time implications from `docs/help.md`.
 - If the answer is "run a skill", give the exact invocation.
