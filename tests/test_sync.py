@@ -17,23 +17,23 @@ sync = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(sync)
 
 
-TAGGED_NOTE_MD = """- Anne - Casa Nova - Sun, Aug 2, 18:25:39 #voice_note_ <!-- node-id: SM44CNI2VXQo -->
+TAGGED_NOTE_MD = """- Garden workshop ideas - Sun, Aug 2, 18:25:39 #voice_note_ <!-- node-id: EXbullet0001 -->
   - **Consumed by Claude Code**: [ ]
-  - **Output Language**: [English](tana:ABWbGynQXa8y)
+  - **Output Language**: [English](tana:EXlanguage01)
   - **Transcript**:
-    - Transcript: <!-- node-id: NJdp_0lCn4wt -->
+    - Transcript: <!-- node-id: EXtrans_0001 -->
       - First paragraph of speech.
       - Second paragraph of speech.
-  - **Area**: [4. Home & Family #key_area](tana:hg6UQLfpqB4G)
+  - **Area**: [4. Home & Family #key_area](tana:EXareaHome01)
   - **Topic(s)**:
     - [Artificial Intelligence #topic](tana:Kd8sLmQ1xAbc)
     - [Astrology #topic](tana:Zz9yX8wV7uTt)
   - **Transcript Summary (AI)**:
-    - 📝 **Note Summary:** <!-- node-id: trnv67uzbkRs -->
-      - **Moving house.** Plans for the new home.
+    - 📝 **Note Summary:** <!-- node-id: EXsummary001 -->
+      - **Workshop plan.** Hands-on first, theory after.
 """
 
-MEMO_MD = """- Voice memo captured Mon, Feb 9, 12:17 PM <!-- node-id: -Q39ghCKlcSE -->
+MEMO_MD = """- Voice memo captured Mon, Feb 9, 12:17 PM <!-- node-id: -EXmemo00001 -->
   - Hello this is the raw capture text.
   - And a second bullet of it.
 """
@@ -52,9 +52,9 @@ MAPPING = {"areas": "area", "projects": "project", "topics": "topic"}
 class ParseTests(unittest.TestCase):
     def test_transcript_summary_unchanged(self):
         title, transcript, summary, _ = sync.parse(TAGGED_NOTE_MD, "Transcript", "Transcript Summary (AI)")
-        self.assertEqual(title, "Anne - Casa Nova")
+        self.assertEqual(title, "Garden workshop ideas")
         self.assertEqual(transcript, ["First paragraph of speech.", "Second paragraph of speech."])
-        self.assertEqual(summary, ["**Moving house.** Plans for the new home."])
+        self.assertEqual(summary, ["**Workshop plan.** Hands-on first, theory after."])
 
     def test_memo_bare_children_are_transcript(self):
         title, transcript, summary, fields = sync.parse(MEMO_MD, "Transcript", "Transcript Summary (AI)")
@@ -65,7 +65,7 @@ class ParseTests(unittest.TestCase):
 
     def test_fields_inline_ref(self):
         _, _, _, fields = sync.parse(TAGGED_NOTE_MD, "Transcript", "Transcript Summary (AI)")
-        self.assertEqual(fields["area"], [("4. Home & Family", "hg6UQLfpqB4G", "key_area")])
+        self.assertEqual(fields["area"], [("4. Home & Family", "EXareaHome01", "key_area")])
 
     def test_fields_child_bullets(self):
         _, _, _, fields = sync.parse(TAGGED_NOTE_MD, "Transcript", "Transcript Summary (AI)")
@@ -74,7 +74,7 @@ class ParseTests(unittest.TestCase):
 
     def test_non_category_fields_captured_but_harmless(self):
         _, _, _, fields = sync.parse(TAGGED_NOTE_MD, "Transcript", "Transcript Summary (AI)")
-        self.assertEqual(fields["output language"], [("English", "ABWbGynQXa8y", None)])
+        self.assertEqual(fields["output language"], [("English", "EXlanguage01", None)])
         self.assertEqual(fields["consumed by claude code"], [])   # checkbox: no value
 
     def test_field_ends_at_next_field_and_plain_text(self):
@@ -96,7 +96,7 @@ class ParseTests(unittest.TestCase):
         cats, refs = sync.categories_from_fields(fields, mapping)
         self.assertEqual(cats, {"areas": ["home-family"], "projects": [],
                                 "topics": ["artificial-intelligence", "astrology"], "people": []})
-        self.assertEqual(refs, {"areas/home-family": "hg6UQLfpqB4G",
+        self.assertEqual(refs, {"areas/home-family": "EXareaHome01",
                                 "topics/artificial-intelligence": "Kd8sLmQ1xAbc",
                                 "topics/astrology": "Zz9yX8wV7uTt"})
 
@@ -227,7 +227,7 @@ class ManifestTests(unittest.TestCase):
     def test_add_hits_and_sort(self):
         rows, order = {}, []
         hits = [{"id": "child", "created": "2026-08-02T21:25:39Z", "name": "Voice memo captured", "tags": []},
-                {"id": "parent", "created": "2026-08-02T21:25:39Z", "name": "Anne",
+                {"id": "parent", "created": "2026-08-02T21:25:39Z", "name": "Garden workshop ideas",
                  "tags": [{"id": "x", "name": "voice note "}]},
                 {"id": "older", "created": 1700000000000, "name": "Old", "tags": []}]
         self.assertEqual(sync.add_hits(rows, order, hits), 3)
