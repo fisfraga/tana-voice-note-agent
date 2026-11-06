@@ -15,7 +15,7 @@ Videos 1–9 were recorded for v1/v2, where the whole system lived inside Tana. 
 | 7 | [How to Use YouTube Notes](https://www.youtube.com/watch?v=qJVE8G49mgM) | 33:58 | Capturing notes from YouTube videos inside Tana. | **Discontinued** — Tana removed the YouTube Notes feature; it does not exist in v3. Kept for history only. | — |
 | 8 | [Enhanced Analysis with Voice Note Collections](https://www.youtube.com/watch?v=U8XWV8sKd9w) | 40:48 | **Collections**: several notes analyzed together; five best practices; three collection-only chat commands; examples. | `<archive>/Collections/*.md` (wikilink groups) via `/vn-catalog collections` / `collect "<theme>"`; any command runs with a collection scope in `/vn-process`. | [08](transcripts/08-collections.md) |
 | 9 | [Masterclass on AI Chats in Tana Voice Note Agent](https://www.youtube.com/watch?v=buvpYCCvCGE) | 2:02:16 | The 20 chat agents: trigger command vs. agent, system prompt, models, every agent demonstrated. | Chats are `mode: interactive` commands (`chat`, `insight-crystallizer`, `connect`, lenses…); the model is whatever runs your harness. | [09](transcripts/09-ai-chats.md) |
-| 10 | Introducing Tana Voice Note Agent v3.0 — *URL TBD* | ~14 min | Tana ↔ local folders, history import, categories from Tana, `/vn-process`, help inside the agent. | **The v3 video.** | after recording |
+| 10 | [Tana Voice Notes in Claude Code \| My Voice Note Agent v3.0](https://www.youtube.com/watch?v=VGxZMAU4OIs) | 46:39 | The v3 walkthrough in Claude Cowork: install from GitHub, `/vn-sync` (one month as a test), enrichment, `/vn-help`, `/vn-catalog` and the write-back to Tana, `/vn-process` (time evolution, a visual timeline, lens analysis with zodiac and mental models), saving outputs. | **The v3 video.** | [10](transcripts/10-introducing-v3.md) |
 
 ## Concept → where it is taught
 
@@ -34,6 +34,14 @@ Videos 1–9 were recorded for v1/v2, where the whole system lived inside Tana. 
 | Collections | 8 · 00:00–10:01 (what, five best practices), 12:02→ examples |
 | AI chats: trigger command vs. agent, system prompt, models | 9 · 14:00–20:01 |
 | Agents one by one | 9 · 24:06→ |
+| v3: why local files make it a real agent | 10 · 02:54 |
+| v3: install from GitHub, first `/vn-sync` | 10 · 04:04 (install), 05:58 (setup and sync), 09:38 (the synced archive, enrichment) |
+| v3: `/vn-help` | 10 · 11:25 |
+| v3: `/vn-catalog`, and write-back to Tana Super Folders | 10 · 11:52 (catalog), 16:15–24:16 (sync back to Tana) |
+| v3: choosing the folder in Claude Cowork | 10 · 18:33 |
+| v3: `/vn-process`, time evolution analysis | 10 · 24:23 (options), 28:03 (time evolution) |
+| v3: lens analysis (zodiac, mental models) | 10 · 36:14 |
+| v3: template vs. free version, outputs as markdown | 10 · 42:38, 44:31 |
 
 ## Maintaining this guide
 

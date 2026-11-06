@@ -18,7 +18,7 @@ The version that earns the name *Agent*. v1 and v2 ran inside Tana, one note at 
 - **22 commands + 8 wisdom lenses** in five categories (Understand, Connect, Act, Create, Build), consolidated from the 43 v2 commands — see the mapping at the bottom of `commands/INDEX.md`. New agent-native `build/` category: Build Document, Build Feature, Article Pipeline, Weekly Digest, Project Brief.
 - **`/vn-process`** — scope (note / day / range / collection / theme) → top-3 suggestions → run → output saved under `Outputs/` and back-linked into every source note (`processed`, `outputs`).
 - **`/vn-catalog`** — areas/projects/topics/entities in frontmatter, living Collections of wikilinks, generated `INDEX.md`.
-- **`/vn-help`** — the manual inside the agent: `docs/help.md` plus the nine-video course guide and transcripts in `docs/videos/`, cited with timestamps.
+- **`/vn-help`** — the manual inside the agent: `docs/help.md` plus the ten-video course guide and transcripts in `docs/videos/`, cited with timestamps.
 - Harness-agnostic: `AGENTS.md` + `.agents/skills/` for Codex/Hermes; `.claude/skills/` symlinks for Claude Code/Cowork; pure-MCP fallback when Python can't run.
 - `tests/test_sync.py` — stdlib unit tests for the parser, query builder, window walker, manifest and frontmatter writer.
 
